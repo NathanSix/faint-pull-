@@ -109,11 +109,57 @@ function localG(latDeg, h){
 function focal(W, H){ return (Math.max(W,H)/2)/Math.tan(31.55*Math.PI/180); }
 const prior = o => CAT[o.cls] || [1, 0.3];
 function mass(o){ return o.mass != null ? o.mass : prior(o)[0]; }
-function distEst(o){
-  if (o.demoD) return o.demoD;
-  const px = Math.max(o.bbox[2], o.bbox[3]);
-  return clamp(prior(o)[1]*S.f/px, 0.15, 200);
+// ----- automatic distance: floor geometry, then "resting on", then apparent size -----
+// Things that stand on the floor, so their box's bottom edge is where they touch it.
+const FLOOR = new Set(["person","chair","couch","bed","dining table","desk","dog","cat","toilet","refrigerator","oven","stove","washing machine","dishwasher",
+  "suitcase","bench","bicycle","bookcase","wardrobe","dresser","file cabinet","armchair","rocking chair","folding chair","barber chair","grand piano","upright piano",
+  "trash can","space heater","vacuum cleaner","bowling ball","sports ball","basketball","soccer ball","tv stand","storage chest","crib","cradle","laundry hamper",
+  "bucket","shopping cart","lawn mower","safe","radiator","pool table","china cabinet","barrel","crate","motorcycle","car","sneaker","sandal","backpack","potted plant","flowerpot"]);
+// Surfaces other things rest on. An object whose base sits on one gets that surface's distance.
+const SUPPORT = new Set(["dining table","desk","bed","couch","bench","chair","armchair","tv stand","dresser","storage chest","pool table","bookcase","china cabinet","file cabinet","refrigerator","oven","stove","washing machine","dishwasher","toilet"]);
+// Horizontal distance to a point on the floor seen at image row y.
+// The camera looks down depressionDeg below level from camH metres up; rows below centre look further down.
+function floorDistance(y, H, f, depressionDeg, camH){
+  const ray = depressionDeg + Math.atan((y - H/2) / f) * 180/Math.PI;
+  return ray > 2.5 ? camH / Math.tan(ray*Math.PI/180) : null;   // near the horizon the answer is too unstable to use
 }
+function liveTilt(){
+  if (S.beta == null) return null;
+  const ang = (screen.orientation && screen.orientation.angle) ?? window.orientation ?? 0;
+  return Math.abs(Math.abs(ang) === 90 ? S.gamma : S.beta);
+}
+function camDepression(){
+  if (S.mode !== "live") return null;
+  const t = S.frozen ? S.frozenTilt : liveTilt();
+  return t == null ? null : 90 - t;
+}
+function floorDist(o){
+  const dep = camDepression(); if (dep == null) return null;
+  const base = o.bbox[1] + o.bbox[3];
+  if (base > S.H * 0.985) return null;                           // bottom is cut off by the frame edge, so the floor contact isn't visible
+  const d = floorDistance(base, S.H, S.f, dep, S.camH);
+  return d && d < 40 ? d : null;
+}
+function supportOf(o){
+  const bx = o.bbox[0] + o.bbox[2]/2, by = o.bbox[1] + o.bbox[3];
+  let best = null;
+  for (const s of S.objs){
+    if (s === o || !SUPPORT.has(s.cls) || SUPPORT.has(o.cls) && s.bbox[2]*s.bbox[3] < o.bbox[2]*o.bbox[3]) continue;
+    const [x,y,w,h] = s.bbox;
+    if (bx < x || bx > x + w || by < y - h*0.08 || by > y + h*0.6) continue;
+    const d = floorDist(s); if (!d) continue;
+    if (!best || w*h < best.area) best = { s, d, area: w*h };
+  }
+  return best;
+}
+function sizeDist(o){ return clamp(prior(o)[1]*S.f/Math.max(o.bbox[2], o.bbox[3]), 0.15, 200); }
+function distAuto(o){
+  if (o.demoD) return { d: o.demoD, src: "demo" };
+  const sup = supportOf(o); if (sup) return { d: sup.d, src: "on", on: sup.s.cls };
+  if (FLOOR.has(o.cls)){ const d = floorDist(o); if (d) return { d, src: "floor" }; }
+  return { d: sizeDist(o), src: "size" };
+}
+const distEst = o => distAuto(o).d;
 function dist(o){ return o.dMode === "size" ? distEst(o) : o.d; }
 function pos(o){
   const [x,y,w,h] = o.bbox, v = [(x+w/2-S.W/2)/S.f, (y+h/2-S.H/2)/S.f, 1], n = Math.hypot(v[0],v[1],v[2]), d = dist(o);
@@ -303,8 +349,10 @@ function renderSel(full){
   if (!o){ panelFor = null; return; }
   const m = mass(o), d = dist(o), F = pullOnYou(o), gl = localG(S.lat, S.alt);
   $("sName").textContent = o.cls;
+  const au = o.dMode === "size" ? distAuto(o) : null;
   const dsrc = o.dMode === "tilt" ? ["tilt","Distance: rangefinder"] : o.dMode === "manual" ? ["manual","Distance: set by hand"]
-    : o.src === "demo" ? ["","Distance: demo layout"] : o.src === "id" ? ["","Distance: rough, from tap area"] : ["","Distance: apparent size"];
+    : au.src === "demo" ? ["","Distance: demo layout"] : au.src === "floor" ? ["tilt","Distance: floor geometry"]
+    : au.src === "on" ? ["tilt",`Distance: resting on ${au.on}`] : o.src === "id" ? ["","Distance: rough, from tap area"] : ["","Distance: apparent size"];
   const chips = [`<span class="chip">${esc(o.src === "demo" ? "demo object" : o.src === "id" ? `identified ${Math.round(o.score*100)}%` : `detected ${Math.round(o.score*100)}%`)}</span>`,
     `<span class="chip ${dsrc[0]}">${dsrc[1]}</span>`];
   if (o.note) chips.push(`<span class="chip">${esc(o.note)}</span>`);
@@ -510,7 +558,7 @@ function setMode(m){
   if (S.mode === "live" && m !== "live") stopCam();
   S.mode = m; S.frozen = false; S.pending = null;
   document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === m));
-  ["freeze","identify","torch","newPhoto","boostWrap","evWrap"].forEach(id => $(id).hidden = true);
+  ["freeze","identify","torch","newPhoto","boostWrap","evWrap","tiltBtn"].forEach(id => $(id).hidden = true);
   $("tools").hidden = m === "demo"; $("drop").hidden = true;
   vid.hidden = true; cv.hidden = false;
   if (m === "demo"){ loadDemo(); $("hudL").textContent = "Demo · schematic room"; setHud("on","Ready"); $("hudB").textContent = "Tap any object. Cyan lines are its pull on you; brighter is stronger."; }
@@ -550,6 +598,7 @@ async function startCam(){
   setSize(vid.videoWidth, vid.videoHeight);
   setupCamControls();
   ["freeze","identify","boostWrap"].forEach(k => $(k).hidden = false); $("freeze").textContent = "Freeze";
+  $("tiltBtn").hidden = S.beta != null;
   requestWake();
   renderLoop(id);
   setHud("busy", "Loading detector");
@@ -598,6 +647,7 @@ function renderLoop(id){
 function setFrozen(on){
   S.frozen = on; $("freeze").textContent = on ? "Resume" : "Freeze";
   if (on){
+    S.frozenTilt = liveTilt();
     if (vid.readyState >= 2) ctx.drawImage(vid, 0, 0, S.W, S.H);
     cv.hidden = false; vid.hidden = true; snapDisp();
     S.objs.forEach(o => o.seen = Infinity); setHud("", "Frozen · tap anything to identify it");
@@ -702,7 +752,7 @@ function onMotion(e){
 }
 function onOrient(e){
   if (e.beta == null) return;
-  if (S.beta == null){ setStat($("tStat"), "on", "Live tilt"); $("tManWrap").hidden = true; }
+  if (S.beta == null){ setStat($("tStat"), "on", "Live tilt"); $("tManWrap").hidden = true; $("tiltBtn").hidden = true; }
   S.beta = e.beta; S.gamma = e.gamma;
   const now = performance.now(); if (now - (S.lastTilt || 0) > 150){ S.lastTilt = now; renderTilt(); }
 }
@@ -715,6 +765,7 @@ function capture(side){
   }, 2000);
 }
 $("enableSensors").addEventListener("click", enableSensors);
+$("tiltBtn").addEventListener("click", enableSensors);
 $("capUp").addEventListener("click", () => capture("up"));
 $("capDn").addEventListener("click", () => capture("dn"));
 function renderG(){
@@ -742,11 +793,7 @@ function drawSpark(){
 }
 function startSensorUi(){ if (S.sensorTimer) return; S.sensorTimer = setInterval(() => { if (document.visibilityState === "visible"){ renderG(); drawSpark(); } }, 100); }
 
-function tiltAngle(){
-  if (S.beta == null) return parseFloat($("tMan").value);
-  const ang = (screen.orientation && screen.orientation.angle) ?? window.orientation ?? 0;
-  return Math.abs(Math.abs(ang) === 90 ? S.gamma : S.beta);
-}
+function tiltAngle(){ const t = liveTilt(); return t == null ? parseFloat($("tMan").value) : t; }
 function tiltDist(){ const b = tiltAngle(); return b > 3 && b < 87 ? S.camH * Math.tan(b*Math.PI/180) : null; }
 function renderTilt(){
   const b = tiltAngle(), d = tiltDist();
@@ -776,8 +823,23 @@ $("geo").addEventListener("click", () => {
 
 function setHud(state, text){ $("hudR").innerHTML = `<span class="dot ${state}"></span>${esc(text)}`; }
 
+// ---------- install and offline ----------
+const standalone = navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+if (isIOS && !standalone && !inFrame && !store.get("installHidden", false)) $("install").hidden = false;
+$("installX").addEventListener("click", () => { $("install").hidden = true; store.set("installHidden", true); });
+if ("serviceWorker" in navigator && !inFrame && (location.protocol === "https:" || location.hostname === "localhost")){
+  let hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (hadController){ $("toastMsg").textContent = "A new version is ready."; $("toast").hidden = false; }
+    hadController = true;
+  });
+}
+$("toastBtn").addEventListener("click", () => location.reload());
+
 // ---------- boot ----------
-window.__faintPull = { S, Engine };   // handy for debugging from the console
+window.__faintPull = { S, Engine, floorDistance, distAuto, setMode, newObj };   // handy for debugging from the console
 setMode("demo"); renderSky(); renderG(); drawSpark();
 document.fonts?.ready.then(() => drawOv());
 })();

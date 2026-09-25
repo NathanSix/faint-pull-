@@ -12,6 +12,14 @@ Live site: https://nathansix.github.io/faint-pull-/
 
 Everything runs on the phone. The bundled MediaPipe library has its usage logging switched off, so nothing is sent anywhere.
 
+## Install on iPhone
+Open the site in Safari, tap Share, then Add to Home Screen. It opens full screen and works offline after the first visit.
+
+## Tests
+`node tests/smoke.cjs` runs the page in a phone-sized Chromium with a fake camera and checks each mode, tap selection,
+tap-to-identify, the floor-distance math, that live scanning never blocks the page, and that the app works offline.
+The "Test and deploy" workflow runs these on every push and only publishes the site if they pass.
+
 ## Editing
 Edit `src/page.html` (markup and styles) or `src/app.js` (logic), then run `python3 src/build.py` to rebuild `index.html`.
 Model files live in `models/` and are downloaded by the "Fetch on-device models" workflow.

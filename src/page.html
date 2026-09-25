@@ -1,5 +1,12 @@
 <title>Faint Pull</title>
 <meta name="description" content="Point your phone at everyday objects and see how hard each one pulls on you with gravity.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Faint Pull">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&family=Michroma&display=swap">
@@ -19,7 +26,7 @@
 html,body{background:var(--void)}
 body{
   color:var(--ghost); font-family:var(--sans); font-size:15px; line-height:1.5;
-  padding-inline:16px; padding-block:0 48px;
+  padding-inline:max(16px, env(safe-area-inset-left, 0px)); padding-top:env(safe-area-inset-top, 0px); padding-bottom:calc(48px + env(safe-area-inset-bottom, 0px));
   background-color:var(--void);
   background-image:
     radial-gradient(1200px 500px at 50% -200px, rgba(0,231,255,.05), transparent 70%),
@@ -51,6 +58,9 @@ header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-be
 .seg button[aria-pressed="true"]{color:var(--ghost);background:var(--graphite)}
 .seg button[aria-pressed="true"]::after{content:"";position:absolute;left:12px;right:12px;bottom:3px;height:1px;background:var(--cyan)}
 .note{font-size:12.5px;color:var(--ti);max-width:560px}
+.install{display:flex;gap:12px;align-items:center;justify-content:space-between;background:var(--carbon);border:1px solid rgba(0,231,255,.35);border-radius:4px;padding:10px 14px;font-size:13px}
+.install b{color:var(--cyan);font-weight:500}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom, 0px));transform:translateX(-50%);z-index:20;display:flex;gap:12px;align-items:center;background:var(--graphite);border:1px solid var(--line2);border-radius:4px;padding:10px 14px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:calc(100% - 32px)}
 .note b{color:var(--ghost);font-weight:500}
 
 /* layout */
@@ -202,6 +212,9 @@ footer{color:var(--ti);font-size:12px;max-width:760px}
     <div class="const">G = <b>6.674 × 10⁻¹¹</b> N·m²/kg²<br>F = G·m₁·m₂ / r²</div>
   </header>
 
+  <div class="install" id="install" hidden><span><b>Install:</b> tap Share, then Add to Home Screen. It opens full screen and works offline.</span><button class="link" id="installX" aria-label="Dismiss">Dismiss</button></div>
+  <div class="toast" id="toast" hidden><span id="toastMsg">A new version is ready.</span><button class="cta" id="toastBtn" style="padding:6px 12px">Reload</button></div>
+
   <div class="bar">
     <div class="seg" role="group" aria-label="Source">
       <button id="m-demo" aria-pressed="true" data-mode="demo">Demo room</button>
@@ -227,6 +240,7 @@ footer{color:var(--ti);font-size:12px;max-width:760px}
         <button class="tool" id="freeze" hidden>Freeze</button>
         <button class="tool primary" id="identify" hidden>Identify center</button>
         <button class="tool" id="torch" hidden aria-pressed="false">Torch</button>
+        <button class="tool primary" id="tiltBtn" hidden>Use tilt for distances</button>
         <button class="tool" id="newPhoto" hidden>New photo</button>
         <div class="light" id="boostWrap" hidden><label for="boost">Brightness</label><input type="range" id="boost" min="0" max="200" value="0"><label class="auto"><input type="checkbox" id="autoBoost" checked> Auto</label></div>
         <div class="light" id="evWrap" hidden><label for="ev">Exposure</label><input type="range" id="ev" step="any"></div>
@@ -340,7 +354,7 @@ footer{color:var(--ti);font-size:12px;max-width:760px}
         <div class="field" id="tManWrap"><label for="tMan">Manual angle (°)</label><input class="inp" id="tMan" type="number" inputmode="decimal" min="5" max="85" step="any" value="62"></div>
       </div>
       <div class="btnrow"><button class="cta" id="tApply">Apply to selected</button></div>
-      <p class="small">Hold the phone at chest height, aim the center crosshair at the spot where the object touches the floor, then tap Apply. This uses real geometry instead of guessing from how big the object looks.</p>
+      <p class="small">In live mode the scanner uses this height and your tilt automatically: anything standing on the floor gets its distance from where it meets the floor, and things resting on a table get the table's distance. Set the height to where you hold the phone. To measure one object by hand, aim the center crosshair at where it touches the floor and tap Apply.</p>
     </section>
 
     <section class="panel">

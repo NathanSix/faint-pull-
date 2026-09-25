@@ -1,0 +1,51 @@
+name: Test and deploy
+# Every push to main runs the smoke tests in a phone-sized browser.
+# The site only goes live if they pass (needs Settings > Pages > Source set to "GitHub Actions").
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.0
+          npx playwright install --with-deps chromium
+      - name: Check index.html was rebuilt from src/
+        run: |
+          python3 src/build.py
+          git diff --exit-code -- index.html sw.js || (echo "::error::index.html or sw.js is out of date. Run python3 src/build.py and commit." && exit 1)
+      - name: Smoke tests
+        run: node tests/smoke.cjs
+        env:
+          TEST_IMAGE_URL: https://raw.githubusercontent.com/tensorflow/tfjs-models/master/deeplab/demo/src/examples/ade20k.jpg
+  deploy:
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4
