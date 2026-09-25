@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07070C">
 <title>Faint Pull</title>
 <meta name="description" content="Point your phone at everyday objects and see how hard each one pulls on you with gravity.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -67,13 +68,25 @@ header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-be
 /* stage */
 .stage{position:relative;background:#000;border:1px solid var(--line2);border-radius:4px;overflow:hidden}
 .stage::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--grad);z-index:3;opacity:.9}
-.stage canvas{display:block;width:100%;height:auto;max-height:72vh;object-fit:contain;touch-action:manipulation;cursor:crosshair}
+.stage canvas{display:block;width:100%;height:auto;margin:0 auto;touch-action:manipulation;cursor:crosshair}
+.vid{position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none}
 .hud{position:absolute;left:0;right:0;display:flex;justify-content:space-between;gap:8px;padding:10px 12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);pointer-events:none;z-index:2}
-.hud.top{top:0}.hud.bot{bottom:0;text-transform:none;letter-spacing:.02em;font-size:11.5px}
+.hud.top{top:0;background:linear-gradient(rgba(7,7,12,.72),rgba(7,7,12,0))}.hud.bot{bottom:0;text-transform:none;letter-spacing:.02em;font-size:11.5px;color:var(--ghost);background:linear-gradient(rgba(7,7,12,0),rgba(7,7,12,.72));padding-top:18px}
 .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ti);margin-right:6px;vertical-align:1px}
 .dot.on{background:var(--lime)} .dot.warn{background:var(--coral)} .dot.busy{background:var(--cyan);animation:pulse 1s infinite}
 @keyframes pulse{50%{opacity:.3}}
-.stage-actions{position:absolute;right:10px;bottom:34px;display:flex;gap:8px;z-index:2}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tool{background:var(--carbon);border:1px solid var(--line2);color:var(--ghost);font-size:13px;padding:8px 14px;border-radius:3px;cursor:pointer}
+.tool:hover{border-color:var(--ti)}
+.tool[aria-pressed="true"]{border-color:var(--lime);color:var(--lime)}
+.tool.primary{border-color:rgba(0,231,255,.5);color:var(--cyan)}
+.tool:disabled{opacity:.4;cursor:default}
+.light{display:flex;align-items:center;gap:8px;flex:1 1 220px;min-width:0;background:var(--carbon);border:1px solid var(--line2);border-radius:3px;padding:2px 10px}
+.light > label:first-child{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ti)}
+.light input[type=range]{flex:1;min-width:60px}
+.light .auto{font-size:12px;color:var(--ti);display:flex;gap:4px;align-items:center;white-space:nowrap}
+.light .auto input{accent-color:var(--lime)}
+.pending{position:absolute;pointer-events:none;border:1px dashed var(--cyan);z-index:2}
 .chipbtn{background:rgba(7,7,12,.78);border:1px solid var(--line2);color:var(--ghost);font-size:12px;padding:7px 12px;border-radius:3px;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .chipbtn:hover{border-color:var(--ti)}
 .drop{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;z-index:2;background:rgba(7,7,12,.6)}
@@ -106,7 +119,7 @@ header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-be
 .field.full{grid-column:1/-1}
 .field label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ti);font-family:var(--mono)}
 .inp{width:100%;background:var(--void);border:1px solid var(--line2);border-radius:3px;padding:9px 10px;font-family:var(--mono);font-size:14px;min-width:0}
-select.inp{font-family:var(--sans)}
+#fType{font-family:var(--sans)}
 .inp:focus{border-color:var(--cyan);outline:none}
 .row{display:flex;gap:8px;align-items:center}
 .row .inp{flex:1}
@@ -127,6 +140,7 @@ details.math pre{font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;c
 .rank li button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;width:100%;padding:9px 10px;border-radius:3px;cursor:pointer;border:1px solid transparent}
 .rank li button:hover{background:var(--graphite)}
 .rank li button[aria-current="true"]{border-color:rgba(185,255,56,.35);background:rgba(185,255,56,.04)}
+.rank .skyrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:9px 10px}
 .rank .nm{font-size:14px;text-transform:capitalize;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rank .fv{font-family:var(--mono);font-size:12.5px;color:var(--ghost);text-align:right}
 .rank .meta{font-family:var(--mono);font-size:11px;color:var(--ti)}
@@ -194,7 +208,7 @@ footer{color:var(--ti);font-size:12px;max-width:760px}
       <button id="m-live" aria-pressed="false" data-mode="live">Live camera</button>
       <button id="m-photo" aria-pressed="false" data-mode="photo">Photo</button>
     </div>
-    <p class="note" id="frameNote" hidden>This preview blocks the live camera and motion sensors. <b>Photo</b> works here and can open your camera. Open the standalone file in Safari for live mode and sensors.</p>
+    <p class="note" id="frameNote" hidden>This preview blocks the live camera, motion sensors and the detailed identifier. <b>Photo</b> works here and can open your camera. The GitHub version has everything.</p>
   </div>
 
   <div class="main">
@@ -203,14 +217,18 @@ footer{color:var(--ti);font-size:12px;max-width:760px}
         <canvas id="cv" width="1200" height="900" aria-label="Scene with detected objects. Tap an object to select it."></canvas>
         <div class="hud top"><span id="hudL">Demo · schematic room</span><span id="hudR"><span class="dot on"></span>Ready</span></div>
         <div class="hud bot"><span id="hudB">Tap any object. Cyan lines are its pull on you; brighter is stronger.</span></div>
-        <div class="stage-actions">
-          <button class="chipbtn" id="freeze" hidden>Freeze</button>
-          <button class="chipbtn" id="newPhoto" hidden>New photo</button>
-        </div>
         <div class="drop" id="drop" hidden></div>
       </div>
+      <div class="tools" id="tools" hidden>
+        <button class="tool" id="freeze" hidden>Freeze</button>
+        <button class="tool primary" id="identify" hidden>Identify center</button>
+        <button class="tool" id="torch" hidden aria-pressed="false">Torch</button>
+        <button class="tool" id="newPhoto" hidden>New photo</button>
+        <div class="light" id="boostWrap" hidden><label for="boost">Brightness</label><input type="range" id="boost" min="0" max="200" value="0"><label class="auto"><input type="checkbox" id="autoBoost" checked> Auto</label></div>
+        <div class="light" id="evWrap" hidden><label for="ev">Exposure</label><input type="range" id="ev" step="any"></div>
+      </div>
       <input type="file" id="file" accept="image/*" hidden>
-      <video id="vid" playsinline muted hidden></video>
+      <video id="vid" class="vid" playsinline muted autoplay></video>
     </div>
 
     <aside class="panel" id="selPanel" aria-live="polite">
@@ -229,7 +247,8 @@ footer{color:var(--ti);font-size:12px;max-width:760px}
         <div class="fields">
           <div class="field full">
             <label for="fType">Object type</label>
-            <select class="inp" id="fType"></select>
+            <div class="row"><input class="inp" id="fType" list="catalog" autocomplete="off" spellcheck="false"><button class="tool" id="refine" title="Run the detailed identifier on this object">Identify</button></div>
+            <datalist id="catalog"></datalist>
           </div>
           <div class="field">
             <label for="fMass">Mass (kg)</label>
@@ -254,6 +273,7 @@ footer{color:var(--ti);font-size:12px;max-width:760px}
     <section class="panel">
       <div class="phead"><h2>Who pulls on you hardest</h2><span class="eyebrow" id="rCount">0 tracked</span></div>
       <ul class="rank" id="rank"></ul>
+      <p class="small" id="rankEmpty" style="padding:0 10px">No objects yet.</p>
       <div class="subh"><span class="eyebrow">Beyond the room · today</span></div>
       <ul class="rank sky" id="skyRank"></ul>
       <p class="small" id="earthCmp"></p>
@@ -327,26 +347,28 @@ footer{color:var(--ti);font-size:12px;max-width:760px}
     </section>
   </div>
 
-  <footer>Masses are typical values for each kind of object. Distance comes from how big the object looks unless you set it with the rangefinder or by hand. Treat the numbers as good estimates. Object recognition runs on your phone with TensorFlow.js COCO-SSD; nothing is uploaded.</footer>
+  <footer>Masses are typical values for each kind of object. Distance comes from how big the object looks unless you set it with the rangefinder or by hand. Treat the numbers as good estimates. Object detection runs on your phone with TensorFlow.js: COCO-SSD finds 80 common kinds of objects, and MobileNet identifies 1,000 more when you tap. Photos and camera frames never leave the phone.</footer>
 </div>
 
 <script>
 (() => {
 "use strict";
 const CONFIG = {
-  libs: ["https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js", "https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"],
-  libsFallback: ["https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js", "https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"],
-  modelUrl: null
+  tf:       ["lib/tf.min.js",       "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"],
+  cocoSsd:  ["lib/coco-ssd.min.js", "https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"],
+  mobilenet:["lib/mobilenet.min.js","https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js"],
+  cocoModel: "model/coco-ssd/model.json",
+  detectLongSide: 640
 };
 const G = 6.674e-11;
 const $ = id => document.getElementById(id);
 const store = {
-  get(k, d){ try{ const v = localStorage.getItem("fp_"+k); return v==null? d : JSON.parse(v);}catch(e){return d;} },
+  get(k, d){ try{ const v = localStorage.getItem("fp_"+k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
   set(k, v){ try{ localStorage.setItem("fp_"+k, JSON.stringify(v)); }catch(e){} }
 };
 
-// typical mass (kg) and largest dimension (m) for COCO classes
-const T = {
+// ---------- catalog: name -> [typical mass kg, largest dimension m] ----------
+const CAT = {
  "person":[70,1.7],"bicycle":[13,1.7],"car":[1500,4.5],"motorcycle":[200,2.1],"airplane":[40000,35],"bus":[12000,12],"train":[100000,25],"truck":[9000,7],"boat":[1000,6],
  "traffic light":[20,1],"fire hydrant":[70,0.8],"stop sign":[5,0.75],"parking meter":[30,1.5],"bench":[25,1.5],"bird":[0.3,0.25],"cat":[4.5,0.45],"dog":[25,0.7],
  "horse":[500,2.4],"sheep":[70,1.2],"cow":[700,2.2],"elephant":[5000,3.2],"bear":[250,1.8],"zebra":[350,2.3],"giraffe":[1000,5],"backpack":[3,0.45],"umbrella":[0.5,0.9],
@@ -358,6 +380,16 @@ const T = {
  "keyboard":[0.8,0.44],"cell phone":[0.18,0.14],"microwave":[13,0.5],"oven":[60,0.8],"toaster":[2,0.3],"sink":[10,0.6],"refrigerator":[80,1.75],"book":[0.5,0.24],
  "clock":[0.8,0.3],"vase":[1.2,0.3],"scissors":[0.1,0.2],"teddy bear":[0.4,0.35],"hair drier":[0.6,0.25],"toothbrush":[0.02,0.19],"bowling ball":[7.3,0.22]
 };
+// ImageNet class index -> [catalog name, mass kg, size m]. Anything unlisted keeps its ImageNet name with an unknown mass.
+const IMN_SRC = `398 abacus 1 .3|401 accordion 8 .45|402 acoustic guitar 2.5 1|407 ambulance 4000 6|409 analog clock .8 .3|411 apron .2 .8|412 trash can 4 .7|414 backpack 3 .45|417 balloon .01 .3|418 ballpoint pen .01 .14|420 banjo 2.5 .95|422 barbell 20 1.5|423 barber chair 60 1.1|426 barometer 1 .25|427 barrel 20 .9|428 wheelbarrow 15 1.4|429 baseball .145 .075|430 basketball .62 .24|431 bassinet 8 .9|434 bath towel .6 1.2|435 bathtub 60 1.6|436 station wagon 1700 4.8|438 beaker .2 .12|440 beer bottle .55 .23|441 beer glass .4 .15|444 tandem bicycle 20 2.4|446 binder .6 .3|447 binoculars .7 .15|448 birdhouse 1 .3|453 bookcase 40 1.8|455 bottle cap .002 .03|457 bow tie .02 .12|462 broom .8 1.3|463 bucket 1 .3|468 taxi 1500 4.5|470 candle .3 .15|473 can opener .2 .2|474 cardigan .5 .7|477 tool kit 5 .5|478 carton .5 .3|481 cassette .05 .1|482 cassette player 1 .3|485 cd player 3 .43|486 cello 3 1.2|487 cell phone .18 .14|488 chain 1 .5|491 chainsaw 5 .8|492 storage chest 20 .9|493 dresser 40 1.2|495 china cabinet 80 1.9|499 cleaver .4 .3|502 clog .4 .28|503 cocktail shaker .3 .22|504 coffee mug .35 .1|505 coffee pot 1 .25|507 combination lock .2 .08|508 keyboard .8 .44|511 convertible 1500 4.5|512 corkscrew .1 .12|514 cowboy boot 1.2 .35|515 cowboy hat .2 .35|516 cradle 10 1|518 helmet 1.4 .3|519 crate 3 .5|520 crib 20 1.3|521 slow cooker 5 .4|522 croquet ball .45 .09|523 crutch 1 1.2|526 desk 35 1.4|527 desktop computer 9 .45|528 desk phone 1.2 .23|530 digital clock .4 .2|531 wristwatch .05 .05|532 dining table 30 1.5|533 dish towel .05 .3|534 dishwasher 45 .85|539 doormat 1.2 .75|541 drum 4 .5|542 drumstick .05 .4|543 dumbbell 5 .35|544 dutch oven 5 .3|545 electric fan 3 .6|546 electric guitar 3.6 1|548 tv stand 60 1.8|549 envelope .01 .24|550 espresso maker 6 .35|551 makeup compact .1 .08|553 file cabinet 25 1.3|556 fire screen 6 .8|558 flute .4 .67|559 folding chair 4 .85|560 football helmet 1.8 .3|563 fountain pen .03 .14|564 bed 90 2.1|567 frying pan 1.5 .45|572 goblet .25 .2|574 golf ball .046 .043|575 golf cart 400 2.4|579 grand piano 400 1.8|584 hair clip .01 .08|585 hair spray .3 .25|587 hammer .6 .33|588 laundry hamper 2 .6|589 hair drier .6 .25|590 tablet .3 .2|591 handkerchief .02 .3|592 hard drive .6 .15|593 harmonica .1 .1|594 harp 35 1.7|596 hatchet .9 .4|604 hourglass .4 .2|605 music player .15 .11|606 clothes iron 1.2 .28|608 jeans .7 1|609 jeep 1800 4.2|610 t-shirt .2 .7|611 jigsaw puzzle .5 .4|613 joystick .3 .2|618 ladle .2 .3|619 lamp 1.5 .4|620 laptop 1.8 .33|621 lawn mower 30 1.4|622 lens cap .01 .06|626 lighter .03 .08|627 limousine 2500 6|629 lipstick .02 .08|630 loafer .35 .28|631 lotion .3 .18|632 speaker 4 .4|636 mail bag 1 .4|641 maraca .2 .25|642 marimba 60 2|647 measuring cup .2 .12|648 medicine cabinet 5 .6|650 microphone .3 .18|651 microwave 13 .5|653 milk can 4 .5|654 minibus 3000 6|656 minivan 2000 5|658 mitten .08 .25|659 mixing bowl .6 .28|661 model t 540 3.4|662 modem .4 .2|664 monitor 5 .6|665 moped 90 1.8|670 scooter 110 1.9|671 mountain bike 13 1.8|673 mouse .1 .11|674 mousetrap .03 .1|675 moving van 5000 7|677 nail .005 .07|679 necklace .02 .4|681 laptop 1.8 .33|687 organ 100 1.5|692 packet .2 .2|695 padlock .2 .08|696 paintbrush .03 .25|697 pajamas .4 1|700 paper towel .4 .28|703 bench 40 1.6|709 pencil case .2 .22|710 pencil sharpener .1 .08|711 perfume .3 .12|713 photocopier 80 1|717 pickup truck 2200 5.5|719 piggy bank .5 .2|720 pill bottle .1 .1|721 pillow .7 .6|722 ping-pong ball .0027 .04|725 pitcher 1.2 .25|728 plastic bag .02 .4|729 dish rack 1.5 .45|731 plunger .4 .5|732 instant camera .5 .15|734 police van 3000 5.5|736 pool table 300 2.5|737 soda bottle .5 .25|738 flowerpot 3 .4|740 power drill 1.8 .28|741 rug 2 1.5|742 printer 7 .45|745 projector 3 .35|746 hockey puck .17 .076|747 punching bag 35 1.2|748 purse .7 .3|750 quilt 2 2|751 race car 700 4.5|752 tennis racket .3 .68|753 radiator 20 .8|754 radio 2 .3|758 fishing reel .3 .1|759 camera .8 .15|760 refrigerator 80 1.75|761 remote .15 .18|765 rocking chair 12 1|767 eraser .02 .05|768 rugby ball .43 .3|769 ruler .05 .3|770 sneaker .3 .29|771 safe 60 .6|773 salt shaker .1 .09|774 sandal .25 .27|778 scale 1.5 .3|779 school bus 11000 11|784 screwdriver .1 .2|786 sewing machine 8 .45|790 basket .5 .45|791 shopping cart 20 1|792 shovel 2 1.2|794 shower curtain .8 1.8|797 sleeping bag 1.5 .5|799 sliding door 40 2|804 soap dispenser .4 .2|805 soccer ball .43 .22|806 sock .05 .25|809 soup bowl .35 .15|811 space heater 3 .5|813 spatula .1 .33|817 sports car 1400 4.4|818 spotlight 1 .3|826 stopwatch .1 .07|827 stove 60 .9|828 strainer .2 .25|831 couch 45 2|836 sunglasses .03 .14|837 sunglasses .03 .14|838 sunscreen .2 .15|841 sweatshirt .6 .7|844 light switch .05 .12|846 table lamp 2 .5|848 tape player 1 .3|849 teapot .8 .25|850 teddy bear .4 .35|851 tv 12 1|852 tennis ball .058 .067|855 thimble .005 .02|857 armchair 50 1.4|859 toaster 2 .3|861 toilet seat 2 .45|862 flashlight .3 .25|864 tow truck 6000 7|867 semi truck 15000 16|868 tray .5 .4|869 coat 1.5 1.1|870 tricycle 10 1|872 tripod 1.5 1.5|874 trolleybus 12000 12|876 tub 5 .6|878 keyboard .8 .44|879 umbrella .5 .9|880 unicycle 5 1.3|881 upright piano 230 1.5|882 vacuum cleaner 5 1.1|883 vase 1.2 .3|889 violin .5 .6|890 volleyball .27 .21|891 waffle iron 3 .3|892 wall clock 1 .35|893 wallet .1 .11|894 wardrobe 70 1.9|896 washbasin 12 .6|897 washing machine 70 .85|898 water bottle .6 .25|899 water jug 2 .3|901 whiskey jug 1.5 .3|902 whistle .02 .05|904 window screen 2 1.2|905 window blind 1 1.2|907 wine bottle 1.3 .3|909 wok 1.8 .4|910 wooden spoon .05 .3|917 comic book .1 .26|921 book .5 .24|923 plate .5 .27|928 ice cream .15 .12|930 baguette .25 .6|931 bagel .1 .1|932 pretzel .1 .12|933 burger .25 .12|934 hot dog .1 .17|936 cabbage 1 .18|937 broccoli .3 .15|938 cauliflower .6 .16|939 zucchini .2 .2|943 cucumber .3 .2|945 bell pepper .17 .1|947 mushroom .02 .05|948 apple .18 .08|949 strawberry .012 .03|950 orange .14 .08|951 lemon .1 .07|953 pineapple 1.5 .3|954 banana .12 .19|957 pomegranate .25 .09|963 pizza .8 .35|966 glass of wine .15 .12|967 espresso .1 .07|968 cup .3 .1|981 person 70 1.7|982 person 70 1.7|983 person 70 1.7|999 toilet paper .12 .11|330 rabbit 2 .4|331 rabbit 2 .4|332 rabbit 2 .4|333 hamster .1 .15|1 goldfish .05 .1`;
+const IMN = {};
+IMN_SRC.split("|").forEach(e => { const p = e.trim().split(" "), i = +p[0], sz = +p.pop(), m = +p.pop(), n = p.slice(1).join(" "); IMN[i] = n; if (!CAT[n]) CAT[n] = [m, sz]; });
+for (let i = 151; i <= 268; i++) IMN[i] = "dog";
+for (let i = 281; i <= 285; i++) IMN[i] = "cat";
+const IN_LABELS = "tench|goldfish|great white shark|tiger shark|hammerhead|electric ray|stingray|cock|hen|ostrich|brambling|goldfinch|house finch|junco|indigo bunting|robin|bulbul|jay|magpie|chickadee|water ouzel|kite|bald eagle|vulture|great grey owl|European fire salamander|common newt|eft|spotted salamander|axolotl|bullfrog|tree frog|tailed frog|loggerhead|leatherback turtle|mud turtle|terrapin|box turtle|banded gecko|common iguana|American chameleon|whiptail|agama|frilled lizard|alligator lizard|Gila monster|green lizard|African chameleon|Komodo dragon|African crocodile|American alligator|triceratops|thunder snake|ringneck snake|hognose snake|green snake|king snake|garter snake|water snake|vine snake|night snake|boa constrictor|rock python|Indian cobra|green mamba|sea snake|horned viper|diamondback|sidewinder|trilobite|harvestman|scorpion|black and gold garden spider|barn spider|garden spider|black widow|tarantula|wolf spider|tick|centipede|black grouse|ptarmigan|ruffed grouse|prairie chicken|peacock|quail|partridge|African grey|macaw|sulphur-crested cockatoo|lorikeet|coucal|bee eater|hornbill|hummingbird|jacamar|toucan|drake|red-breasted merganser|goose|black swan|tusker|echidna|platypus|wallaby|koala|wombat|jelly fish|sea anemone|brain coral|flatworm|nematode|conch|snail|slug|sea slug|chiton|chambered nautilus|Dungeness crab|rock crab|fiddler crab|king crab|American lobster|spiny lobster|crayfish|hermit crab|isopod|white stork|black stork|spoonbill|flamingo|little blue heron|American egret|bittern|crane|limpkin|European gallinule|American coot|bustard|ruddy turnstone|red-backed sandpiper|redshank|dowitcher|oystercatcher|pelican|king penguin|albatross|grey whale|killer whale|dugong|sea lion|Chihuahua|Japanese spaniel|Maltese dog|Pekinese|Shih-Tzu|Blenheim spaniel|papillon|toy terrier|Rhodesian ridgeback|Afghan hound|basset|beagle|bloodhound|bluetick|black-and-tan coonhound|Walker hound|English foxhound|redbone|borzoi|Irish wolfhound|Italian greyhound|whippet|Ibizan hound|Norwegian elkhound|otterhound|Saluki|Scottish deerhound|Weimaraner|Staffordshire bullterrier|American Staffordshire terrier|Bedlington terrier|Border terrier|Kerry blue terrier|Irish terrier|Norfolk terrier|Norwich terrier|Yorkshire terrier|wire-haired fox terrier|Lakeland terrier|Sealyham terrier|Airedale|cairn|Australian terrier|Dandie Dinmont|Boston bull|miniature schnauzer|giant schnauzer|standard schnauzer|Scotch terrier|Tibetan terrier|silky terrier|soft-coated wheaten terrier|West Highland white terrier|Lhasa|flat-coated retriever|curly-coated retriever|golden retriever|Labrador retriever|Chesapeake Bay retriever|German short-haired pointer|vizsla|English setter|Irish setter|Gordon setter|Brittany spaniel|clumber|English springer|Welsh springer spaniel|cocker spaniel|Sussex spaniel|Irish water spaniel|kuvasz|schipperke|groenendael|malinois|briard|kelpie|komondor|Old English sheepdog|Shetland sheepdog|collie|Border collie|Bouvier des Flandres|Rottweiler|German shepherd|Doberman|miniature pinscher|Greater Swiss Mountain dog|Bernese mountain dog|Appenzeller|EntleBucher|boxer|bull mastiff|Tibetan mastiff|French bulldog|Great Dane|Saint Bernard|Eskimo dog|malamute|Siberian husky|dalmatian|affenpinscher|basenji|pug|Leonberg|Newfoundland|Great Pyrenees|Samoyed|Pomeranian|chow|keeshond|Brabancon griffon|Pembroke|Cardigan|toy poodle|miniature poodle|standard poodle|Mexican hairless|timber wolf|white wolf|red wolf|coyote|dingo|dhole|African hunting dog|hyena|red fox|kit fox|Arctic fox|grey fox|tabby|tiger cat|Persian cat|Siamese cat|Egyptian cat|cougar|lynx|leopard|snow leopard|jaguar|lion|tiger|cheetah|brown bear|American black bear|ice bear|sloth bear|mongoose|meerkat|tiger beetle|ladybug|ground beetle|long-horned beetle|leaf beetle|dung beetle|rhinoceros beetle|weevil|fly|bee|ant|grasshopper|cricket|walking stick|cockroach|mantis|cicada|leafhopper|lacewing|dragonfly|damselfly|admiral|ringlet|monarch|cabbage butterfly|sulphur butterfly|lycaenid|starfish|sea urchin|sea cucumber|wood rabbit|hare|Angora|hamster|porcupine|fox squirrel|marmot|beaver|guinea pig|sorrel|zebra|hog|wild boar|warthog|hippopotamus|ox|water buffalo|bison|ram|bighorn|ibex|hartebeest|impala|gazelle|Arabian camel|llama|weasel|mink|polecat|black-footed ferret|otter|skunk|badger|armadillo|three-toed sloth|orangutan|gorilla|chimpanzee|gibbon|siamang|guenon|patas|baboon|macaque|langur|colobus|proboscis monkey|marmoset|capuchin|howler monkey|titi|spider monkey|squirrel monkey|Madagascar cat|indri|Indian elephant|African elephant|lesser panda|giant panda|barracouta|eel|coho|rock beauty|anemone fish|sturgeon|gar|lionfish|puffer|abacus|abaya|academic gown|accordion|acoustic guitar|aircraft carrier|airliner|airship|altar|ambulance|amphibian|analog clock|apiary|apron|ashcan|assault rifle|backpack|bakery|balance beam|balloon|ballpoint|Band Aid|banjo|bannister|barbell|barber chair|barbershop|barn|barometer|barrel|barrow|baseball|basketball|bassinet|bassoon|bathing cap|bath towel|bathtub|beach wagon|beacon|beaker|bearskin|beer bottle|beer glass|bell cote|bib|bicycle-built-for-two|bikini|binder|binoculars|birdhouse|boathouse|bobsled|bolo tie|bonnet|bookcase|bookshop|bottlecap|bow|bow tie|brass|brassiere|breakwater|breastplate|broom|bucket|buckle|bulletproof vest|bullet train|butcher shop|cab|caldron|candle|cannon|canoe|can opener|cardigan|car mirror|carousel|carpenter's kit|carton|car wheel|cash machine|cassette|cassette player|castle|catamaran|CD player|cello|cellular telephone|chain|chainlink fence|chain mail|chain saw|chest|chiffonier|chime|china cabinet|Christmas stocking|church|cinema|cleaver|cliff dwelling|cloak|clog|cocktail shaker|coffee mug|coffeepot|coil|combination lock|computer keyboard|confectionery|container ship|convertible|corkscrew|cornet|cowboy boot|cowboy hat|cradle|crane|crash helmet|crate|crib|Crock Pot|croquet ball|crutch|cuirass|dam|desk|desktop computer|dial telephone|diaper|digital clock|digital watch|dining table|dishrag|dishwasher|disk brake|dock|dogsled|dome|doormat|drilling platform|drum|drumstick|dumbbell|Dutch oven|electric fan|electric guitar|electric locomotive|entertainment center|envelope|espresso maker|face powder|feather boa|file|fireboat|fire engine|fire screen|flagpole|flute|folding chair|football helmet|forklift|fountain|fountain pen|four-poster|freight car|French horn|frying pan|fur coat|garbage truck|gasmask|gas pump|goblet|go-kart|golf ball|golfcart|gondola|gong|gown|grand piano|greenhouse|grille|grocery store|guillotine|hair slide|hair spray|half track|hammer|hamper|hand blower|hand-held computer|handkerchief|hard disc|harmonica|harp|harvester|hatchet|holster|home theater|honeycomb|hook|hoopskirt|horizontal bar|horse cart|hourglass|iPod|iron|jack-o'-lantern|jean|jeep|jersey|jigsaw puzzle|jinrikisha|joystick|kimono|knee pad|knot|lab coat|ladle|lampshade|laptop|lawn mower|lens cap|letter opener|library|lifeboat|lighter|limousine|liner|lipstick|Loafer|lotion|loudspeaker|loupe|lumbermill|magnetic compass|mailbag|mailbox|maillot|maillot|manhole cover|maraca|marimba|mask|matchstick|maypole|maze|measuring cup|medicine chest|megalith|microphone|microwave|military uniform|milk can|minibus|miniskirt|minivan|missile|mitten|mixing bowl|mobile home|Model T|modem|monastery|monitor|moped|mortar|mortarboard|mosque|mosquito net|motor scooter|mountain bike|mountain tent|mouse|mousetrap|moving van|muzzle|nail|neck brace|necklace|nipple|notebook|obelisk|oboe|ocarina|odometer|oil filter|organ|oscilloscope|overskirt|oxcart|oxygen mask|packet|paddle|paddlewheel|padlock|paintbrush|pajama|palace|panpipe|paper towel|parachute|parallel bars|park bench|parking meter|passenger car|patio|pay-phone|pedestal|pencil box|pencil sharpener|perfume|Petri dish|photocopier|pick|pickelhaube|picket fence|pickup|pier|piggy bank|pill bottle|pillow|ping-pong ball|pinwheel|pirate|pitcher|plane|planetarium|plastic bag|plate rack|plow|plunger|Polaroid camera|pole|police van|poncho|pool table|pop bottle|pot|potter's wheel|power drill|prayer rug|printer|prison|projectile|projector|puck|punching bag|purse|quill|quilt|racer|racket|radiator|radio|radio telescope|rain barrel|recreational vehicle|reel|reflex camera|refrigerator|remote control|restaurant|revolver|rifle|rocking chair|rotisserie|rubber eraser|rugby ball|rule|running shoe|safe|safety pin|saltshaker|sandal|sarong|sax|scabbard|scale|school bus|schooner|scoreboard|screen|screw|screwdriver|seat belt|sewing machine|shield|shoe shop|shoji|shopping basket|shopping cart|shovel|shower cap|shower curtain|ski|ski mask|sleeping bag|slide rule|sliding door|slot|snorkel|snowmobile|snowplow|soap dispenser|soccer ball|sock|solar dish|sombrero|soup bowl|space bar|space heater|space shuttle|spatula|speedboat|spider web|spindle|sports car|spotlight|stage|steam locomotive|steel arch bridge|steel drum|stethoscope|stole|stone wall|stopwatch|stove|strainer|streetcar|stretcher|studio couch|stupa|submarine|suit|sundial|sunglass|sunglasses|sunscreen|suspension bridge|swab|sweatshirt|swimming trunks|swing|switch|syringe|table lamp|tank|tape player|teapot|teddy|television|tennis ball|thatch|theater curtain|thimble|thresher|throne|tile roof|toaster|tobacco shop|toilet seat|torch|totem pole|tow truck|toyshop|tractor|trailer truck|tray|trench coat|tricycle|trimaran|tripod|triumphal arch|trolleybus|trombone|tub|turnstile|typewriter keyboard|umbrella|unicycle|upright|vacuum|vase|vault|velvet|vending machine|vestment|viaduct|violin|volleyball|waffle iron|wall clock|wallet|wardrobe|warplane|washbasin|washer|water bottle|water jug|water tower|whiskey jug|whistle|wig|window screen|window shade|Windsor tie|wine bottle|wing|wok|wooden spoon|wool|worm fence|wreck|yawl|yurt|web site|comic book|crossword puzzle|street sign|traffic light|book jacket|menu|plate|guacamole|consomme|hot pot|trifle|ice cream|ice lolly|French loaf|bagel|pretzel|cheeseburger|hotdog|mashed potato|head cabbage|broccoli|cauliflower|zucchini|spaghetti squash|acorn squash|butternut squash|cucumber|artichoke|bell pepper|cardoon|mushroom|Granny Smith|strawberry|orange|lemon|fig|pineapple|banana|jackfruit|custard apple|pomegranate|hay|carbonara|chocolate sauce|dough|meat loaf|pizza|potpie|burrito|red wine|espresso|cup|eggnog|alp|bubble|cliff|coral reef|geyser|lakeside|promontory|sandbar|seashore|valley|volcano|ballplayer|groom|scuba diver|rapeseed|daisy|yellow lady's slipper|corn|acorn|hip|buckeye|coral fungus|agaric|gyromitra|stinkhorn|earthstar|hen-of-the-woods|bolete|ear|toilet tissue".split("|");
+// COCO classes generic enough that the detailed identifier can name them more precisely
+const REFINABLE = new Set(["bottle","cup","bowl","wine glass","book","chair","couch","dining table","tv","laptop","cell phone","remote","clock","vase","sports ball","handbag","backpack","suitcase","keyboard","oven","microwave","refrigerator","sink","toaster","bed","bench","potted plant","umbrella","tennis racket"]);
+
 // reference weights (N) for "about the weight of" comparisons
 const REFS = [
   ["a bacterium", 1e-14, "bacterium"],["a red blood cell", 2.6e-13, "blood cell"],["a dust mote", 5e-12, "dust"],
@@ -368,12 +400,16 @@ const S = {
   mode: "demo", objs: [], sel: null, nextId: 1,
   W: 1200, H: 900, f: 0,
   you: store.get("you", 70), lat: store.get("lat", 40.71), alt: store.get("alt", 10), camH: store.get("camH", 1.4),
-  model: null, modelState: "idle", stream: null, frozen: false, photo: null, busy: false,
-  motion: { on:false, mag:null, ema:null, z:0, buf:[], samples:null, up:null, dn:null },
-  beta: null, lastPanel: 0
+  model: null, modelPromise: null, clf: null, clfPromise: null,
+  stream: null, track: null, loopId: 0, frozen: false, still: null, photo: null, busy: false, lastPanel: 0, lastRank: 0,
+  boost: 0, autoBoost: store.get("autoBoost", true), manualBoost: store.get("boost", 0.6), torch: false,
+  motion: { mag:null, ema:null, buf:[], samples:null, up:null, dn:null },
+  beta: null, gamma: null
 };
 
 const cv = $("cv"), ctx = cv.getContext("2d"), vid = $("vid");
+const det = document.createElement("canvas"), dctx = det.getContext("2d", { willReadFrequently: false });
+const lum = document.createElement("canvas"); lum.width = 32; lum.height = 32; const lctx = lum.getContext("2d", { willReadFrequently: true });
 const inFrame = (() => { try { return window.self !== window.top; } catch(e){ return true; } })();
 if (inFrame) $("frameNote").hidden = false;
 
@@ -381,12 +417,12 @@ if (inFrame) $("frameNote").hidden = false;
 const SUP = {"-":"⁻","0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹"};
 function sci(x, p=2){
   if (!isFinite(x) || x === 0) return "0";
-  const e = Math.floor(Math.log10(Math.abs(x))); const m = x / Math.pow(10, e);
-  if (e >= -2 && e <= 3) return x.toPrecision(p+1).replace(/\.?0+$/,"");
-  return m.toFixed(p) + " × 10" + String(e).split("").map(c=>SUP[c]).join("");
+  const e = Math.floor(Math.log10(Math.abs(x))), m = x / Math.pow(10, e);
+  if (e >= -2 && e <= 3) return (+x.toPrecision(p+1)).toString();
+  return m.toFixed(p) + " × 10" + String(e).split("").map(c => SUP[c]).join("");
 }
 function fmtM(d){ return d < 1 ? (d*100).toFixed(0)+" cm" : d < 10 ? d.toFixed(2)+" m" : d.toFixed(1)+" m"; }
-function fmtKg(m){ return m < 1 ? (m*1000).toFixed(m<0.1?1:0)+" g" : m < 1000 ? (+m.toPrecision(3))+" kg" : sci(m)+" kg"; }
+function fmtKg(m){ return m < 1 ? (m*1000).toFixed(m < 0.1 ? 1 : 0)+" g" : m < 1000 ? (+m.toPrecision(3))+" kg" : sci(m)+" kg"; }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 // ---------- physics ----------
@@ -395,31 +431,32 @@ function localG(latDeg, h){
   const s2 = Math.sin(latDeg*Math.PI/180)**2;
   return 9.7803253359*(1+0.00193185265241*s2)/Math.sqrt(1-0.00669437999013*s2) - 3.086e-6*h;
 }
-function focal(W, H){ return (Math.max(W,H)/2)/Math.tan(31.55*Math.PI/180); } // iPhone SE main camera, ~63° across the long side
-function name(o){ return o.label || o.cls; }
-function mass(o){ return o.mass != null ? o.mass : (T[o.cls]||[1,0.3])[0]; }
+// iPhone SE (2nd gen) main camera: about 63° across the sensor's long side
+function focal(W, H){ return (Math.max(W,H)/2)/Math.tan(31.55*Math.PI/180); }
+const prior = o => CAT[o.cls] || [1, 0.3];
+function mass(o){ return o.mass != null ? o.mass : prior(o)[0]; }
 function distEst(o){
   if (o.demoD) return o.demoD;
-  const real = (T[o.cls]||[1,0.3])[1];
   const px = Math.max(o.bbox[2], o.bbox[3]);
-  return Math.min(200, Math.max(0.15, real*S.f/px));
+  return Math.min(200, Math.max(0.15, prior(o)[1]*S.f/px));
 }
 function dist(o){ return o.dMode === "size" ? distEst(o) : o.d; }
 function pos(o){
-  const [x,y,w,h] = o.bbox, cx = x+w/2, cy = y+h/2;
-  const v = [(cx-S.W/2)/S.f, (cy-S.H/2)/S.f, 1]; const n = Math.hypot(...v), d = dist(o);
-  return v.map(c => c/n*d);
+  const [x,y,w,h] = o.bbox, v = [(x+w/2-S.W/2)/S.f, (y+h/2-S.H/2)/S.f, 1], n = Math.hypot(v[0],v[1],v[2]), d = dist(o);
+  return [v[0]/n*d, v[1]/n*d, d/n];
 }
-function between(a, b){ const p=pos(a), q=pos(b); return Math.max(0.05, Math.hypot(p[0]-q[0],p[1]-q[1],p[2]-q[2])); }
+function between(a, b){ const p = pos(a), q = pos(b); return Math.max(0.05, Math.hypot(p[0]-q[0], p[1]-q[1], p[2]-q[2])); }
 function pullOnYou(o){ return force(mass(o), S.you, dist(o)); }
 
-// ---------- sky ----------
+// ---------- sky (low-precision Sun and Moon distances, Meeus ch. 25 and 47) ----------
 function sky(date){
-  const jd = date.getTime()/86400000 + 2440587.5, n = jd - 2451545, T2 = n/36525, r = Math.PI/180;
+  const jd = date.getTime()/86400000 + 2440587.5, n = jd - 2451545, T = n/36525, r = Math.PI/180;
   const g = (357.529 + 0.98560028*n)*r;
   const sunAU = 1.00014 - 0.01671*Math.cos(g) - 0.00014*Math.cos(2*g);
-  const D = (297.8501921 + 445267.1114034*T2)*r, M = (357.5291092 + 35999.0502909*T2)*r, Mp = (134.9633964 + 477198.8675055*T2)*r;
-  const moonKm = 385000.56 - 20905.355*Math.cos(Mp) - 3699.111*Math.cos(2*D-Mp) - 2955.968*Math.cos(2*D) - 569.925*Math.cos(2*Mp) + 48.888*Math.cos(M) - 3.149*Math.cos(2*D-M-Mp) + 246.158*Math.cos(2*D-2*Mp) - 152.138*Math.cos(2*D-M-Mp) - 170.733*Math.cos(2*D+Mp) - 204.586*Math.cos(2*D-M) - 129.62*Math.cos(Mp-M) + 108.743*Math.cos(D) + 104.755*Math.cos(Mp+M);
+  const D = (297.8501921 + 445267.1114034*T)*r, M = (357.5291092 + 35999.0502909*T)*r, Mp = (134.9633964 + 477198.8675055*T)*r, F = (93.2720950 + 483202.0175233*T)*r;
+  const moonKm = 385000.56 - 20905.355*Math.cos(Mp) - 3699.111*Math.cos(2*D-Mp) - 2955.968*Math.cos(2*D) - 569.925*Math.cos(2*Mp)
+    + 48.888*Math.cos(M) - 3.149*Math.cos(2*F) + 246.158*Math.cos(2*D-2*Mp) - 152.138*Math.cos(2*D-M-Mp) - 170.733*Math.cos(2*D+Mp)
+    - 204.586*Math.cos(2*D-M) - 129.62*Math.cos(M-Mp) + 108.743*Math.cos(D) + 104.755*Math.cos(M+Mp);
   return { sunM: sunAU*1.495978707e11, moonM: moonKm*1000, sunAU, moonKm };
 }
 
@@ -435,126 +472,137 @@ const DEMO = [
   {cls:"bowling ball", bbox:[500,740,110,110], d:1.25},
   {cls:"cat", bbox:[860,720,210,130], d:1.3}
 ];
+function setSize(W, H){ S.W = W; S.H = H; S.f = focal(W, H); if (cv.width !== W) cv.width = W; if (cv.height !== H) cv.height = H; fitCanvas(); }
 function loadDemo(){
-  S.W = 1200; S.H = 900; S.f = focal(S.W, S.H); cv.width = S.W; cv.height = S.H;
-  S.objs = DEMO.map(o => ({ id:S.nextId++, cls:o.cls, label:o.label||null, mass:o.mass ?? null, bbox:o.bbox.slice(), demoD:o.d, dMode:"size", d:o.d, score:1, seen:Infinity }));
+  setSize(1200, 900);
+  S.objs = DEMO.map(o => newObj({ cls:o.cls, bbox:o.bbox.slice(), demoD:o.d, score:1, seen:Infinity, src:"demo" }));
   S.sel = S.objs.find(o => o.cls === "bowling ball").id;
 }
+function newObj(p){ return Object.assign({ id:S.nextId++, cls:"", detCls:null, mass:null, bbox:[0,0,1,1], dMode:"size", d:1, score:1, seen:performance.now(), src:"coco", note:null }, p); }
 function drawDemo(){
-  const W=S.W,H=S.H, c=ctx;
-  c.fillStyle="#07070C"; c.fillRect(0,0,W,H);
-  const vx=600, vy=330;
-  // back wall
-  c.fillStyle="#0c0c14"; c.fillRect(0,0,W,vy+230);
-  c.strokeStyle="rgba(233,236,242,.06)"; c.lineWidth=1;
-  for(let x=0;x<=W;x+=60){ c.beginPath(); c.moveTo(x,0); c.lineTo(x,vy+230); c.stroke(); }
-  // floor
-  const fy = vy+230; c.fillStyle="#0a0a11"; c.fillRect(0,fy,W,H-fy);
-  c.strokeStyle="rgba(0,231,255,.10)";
-  for(let i=-14;i<=14;i++){ c.beginPath(); c.moveTo(vx+i*40, fy); c.lineTo(vx+i*260, H); c.stroke(); }
-  for(let k=0;k<9;k++){ const t=Math.pow(k/8,1.8), y=fy+(H-fy)*t; c.beginPath(); c.moveTo(0,y); c.lineTo(W,y); c.stroke(); }
-  c.strokeStyle="rgba(233,236,242,.18)"; c.beginPath(); c.moveTo(0,fy); c.lineTo(W,fy); c.stroke();
-  const fill="#1B1C28", edge="rgba(233,236,242,.28)";
-  const R=(x,y,w,h,r=6)=>{ c.beginPath(); c.roundRect(x,y,w,h,r); c.fillStyle=fill; c.fill(); c.strokeStyle=edge; c.stroke(); };
-  // tv
-  R(470,140,260,150,4); c.fillStyle="#07070C"; c.fillRect(480,150,240,130); c.fillStyle="rgba(0,231,255,.07)"; c.fillRect(480,150,240,130); R(590,290,20,12,1);
-  // couch
+  const W = S.W, H = S.H, c = ctx, vx = 600, fy = 560;
+  c.fillStyle = "#07070C"; c.fillRect(0,0,W,H);
+  c.fillStyle = "#0c0c14"; c.fillRect(0,0,W,fy);
+  c.strokeStyle = "rgba(233,236,242,.06)"; c.lineWidth = 1;
+  for (let x = 0; x <= W; x += 60){ c.beginPath(); c.moveTo(x,0); c.lineTo(x,fy); c.stroke(); }
+  c.fillStyle = "#0a0a11"; c.fillRect(0,fy,W,H-fy);
+  c.strokeStyle = "rgba(0,231,255,.10)";
+  for (let i = -14; i <= 14; i++){ c.beginPath(); c.moveTo(vx+i*40, fy); c.lineTo(vx+i*260, H); c.stroke(); }
+  for (let k = 0; k < 9; k++){ const y = fy+(H-fy)*Math.pow(k/8,1.8); c.beginPath(); c.moveTo(0,y); c.lineTo(W,y); c.stroke(); }
+  c.strokeStyle = "rgba(233,236,242,.18)"; c.beginPath(); c.moveTo(0,fy); c.lineTo(W,fy); c.stroke();
+  const fill = "#1B1C28", edge = "rgba(233,236,242,.28)";
+  const R = (x,y,w,h,r=6) => { c.beginPath(); c.roundRect ? c.roundRect(x,y,w,h,r) : c.rect(x,y,w,h); c.fillStyle = fill; c.fill(); c.strokeStyle = edge; c.stroke(); };
+  const O = (x,y,r,f) => { c.beginPath(); c.arc(x,y,r,0,Math.PI*2); c.fillStyle = f || fill; c.fill(); c.strokeStyle = edge; c.stroke(); };
+  R(470,140,260,150,4); c.fillStyle = "#07070C"; c.fillRect(480,150,240,130); c.fillStyle = "rgba(0,231,255,.07)"; c.fillRect(480,150,240,130); R(590,290,20,12,1);
   R(60,380,400,130,14); R(60,330,400,80,14); R(40,380,50,150,12); R(430,380,50,150,12);
-  // plant
-  R(1040,450,80,100,6); c.beginPath(); c.arc(1080,380,70,0,Math.PI*2); c.fillStyle="#141824"; c.fill(); c.strokeStyle=edge; c.stroke();
-  // table
+  R(1040,450,80,100,6); O(1080,380,70,"#141824");
   R(560,470,440,26,3); R(585,496,18,164,2); R(957,496,18,164,2);
-  // cup + laptop
-  R(640,420,40,50,6); c.beginPath(); c.arc(686,440,10,-Math.PI/2,Math.PI/2); c.strokeStyle=edge; c.stroke();
-  R(780,380,130,82,4); c.fillStyle="rgba(139,92,255,.10)"; c.fillRect(788,388,114,66); R(770,462,150,10,2);
-  // chair
+  R(640,420,40,50,6); c.beginPath(); c.arc(686,440,10,-Math.PI/2,Math.PI/2); c.strokeStyle = edge; c.stroke();
+  R(780,380,130,82,4); c.fillStyle = "rgba(139,92,255,.10)"; c.fillRect(788,388,114,66); R(770,462,150,10,2);
   R(260,520,150,150,8); R(260,660,150,30,6); R(270,690,14,100,2); R(386,690,14,100,2);
-  // ball
-  c.beginPath(); c.arc(555,795,55,0,Math.PI*2); c.fillStyle="#141420"; c.fill(); c.strokeStyle=edge; c.stroke();
-  [[540,775],[560,770],[552,790]].forEach(([x,y])=>{c.beginPath();c.arc(x,y,5,0,Math.PI*2);c.fillStyle="#07070C";c.fill();});
-  // cat
-  c.beginPath(); c.ellipse(965,800,95,45,0,0,Math.PI*2); c.fillStyle=fill; c.fill(); c.strokeStyle=edge; c.stroke();
-  c.beginPath(); c.arc(885,770,34,0,Math.PI*2); c.fill(); c.stroke();
-  c.beginPath(); c.moveTo(862,748); c.lineTo(866,720); c.lineTo(882,740); c.moveTo(890,738); c.lineTo(904,716); c.lineTo(910,748); c.fill(); c.stroke();
+  O(555,795,55,"#141420"); [[540,775],[560,770],[552,790]].forEach(([x,y]) => { c.beginPath(); c.arc(x,y,5,0,Math.PI*2); c.fillStyle = "#07070C"; c.fill(); });
+  c.beginPath(); c.ellipse(965,800,95,45,0,0,Math.PI*2); c.fillStyle = fill; c.fill(); c.strokeStyle = edge; c.stroke();
+  O(885,770,34);
+  c.beginPath(); c.moveTo(862,748); c.lineTo(866,720); c.lineTo(882,740); c.moveTo(890,738); c.lineTo(904,716); c.lineTo(910,748); c.fillStyle = fill; c.fill(); c.stroke();
 }
 
-// ---------- overlay ----------
-function drawOverlay(){
-  const c = ctx, k = S.W / Math.max(1, cv.clientWidth), W=S.W, H=S.H;
-  const ax = W/2, ay = H - 6*k;
-  const objs = S.objs; if (!objs.length) return;
-  const compact = cv.clientWidth < 640;
-  const fs = objs.map(pullOnYou), lmin = Math.log10(Math.min(...fs)), lmax = Math.log10(Math.max(...fs));
-  const sel = objs.find(o => o.id === S.sel);
-  // pull lines to you
-  objs.forEach((o,i) => {
-    const t = lmax-lmin < 1e-9 ? 1 : (Math.log10(fs[i])-lmin)/(lmax-lmin);
-    const [x,y,w,h] = o.bbox;
-    c.strokeStyle = `rgba(0,231,255,${(0.12+0.78*t).toFixed(3)})`; c.lineWidth = (0.8+2*t)*k;
-    c.beginPath(); c.moveTo(ax, ay); c.lineTo(x+w/2, y+h); c.stroke();
-  });
-  // neighbour lines
-  if (sel) {
-    const [sx,sy,sw,sh] = sel.bbox;
-    c.setLineDash([4*k, 5*k]);
-    objs.forEach(o => { if (o===sel) return; const [x,y,w,h]=o.bbox;
-      c.strokeStyle="rgba(139,92,255,.75)"; c.lineWidth=1.2*k; c.beginPath(); c.moveTo(sx+sw/2, sy+sh/2); c.lineTo(x+w/2,y+h/2); c.stroke(); });
-    c.setLineDash([]);
+// ---------- canvas sizing: keep the whole frame visible so taps map 1:1 ----------
+function fitCanvas(){
+  const stage = $("stage"), maxW = stage.clientWidth || 360, maxH = Math.max(260, window.innerHeight * 0.74);
+  const w = Math.min(maxW, maxH * S.W / S.H);
+  cv.style.width = Math.round(w) + "px";
+}
+window.addEventListener("resize", () => { fitCanvas(); draw(); });
+
+// ---------- drawing ----------
+// Brighten a video frame: 'screen' lifts shadows more than highlights, so bright areas don't blow out.
+function drawBoosted(c, src, w, h, boost){
+  c.globalCompositeOperation = "source-over"; c.globalAlpha = 1; c.drawImage(src, 0, 0, w, h);
+  if (boost > 0.01){
+    c.globalCompositeOperation = "screen";
+    let b = boost; while (b > 0.01){ c.globalAlpha = Math.min(1, b); c.drawImage(src, 0, 0, w, h); b -= 1; }
+    c.globalCompositeOperation = "source-over"; c.globalAlpha = 1;
   }
-  // boxes + labels
-  objs.forEach((o,i) => {
-    const [x,y,w,h] = o.bbox, isSel = o===sel, L = Math.min(18*k, w/3, h/3);
-    c.strokeStyle = isSel ? "#B9FF38" : "rgba(233,236,242,.55)"; c.lineWidth = (isSel?2:1.2)*k;
-    c.beginPath();
-    c.moveTo(x,y+L); c.lineTo(x,y); c.lineTo(x+L,y);
-    c.moveTo(x+w-L,y); c.lineTo(x+w,y); c.lineTo(x+w,y+L);
-    c.moveTo(x+w,y+h-L); c.lineTo(x+w,y+h); c.lineTo(x+w-L,y+h);
-    c.moveTo(x+L,y+h); c.lineTo(x,y+h); c.lineTo(x,y+h-L);
-    c.stroke();
-    if (isSel){ c.fillStyle="rgba(185,255,56,.05)"; c.fillRect(x,y,w,h); }
-    if (compact && !isSel) return;
-    const txt = `${name(o).toUpperCase()}  ${fmtM(dist(o))}`;
-    c.font = `500 ${11*k}px "Geist Mono", ui-monospace, monospace`;
-    const tw = c.measureText(txt).width + 12*k, th = 18*k;
-    let lx = Math.min(Math.max(0, x), W - tw), ly = y - th - 3*k; if (ly < 28*k) ly = y + 3*k;
-    c.fillStyle = isSel ? "#B9FF38" : "rgba(7,7,12,.82)"; c.fillRect(lx, ly, tw, th);
-    c.fillStyle = isSel ? "#07070C" : "#E9ECF2"; c.textBaseline="middle"; c.fillText(txt, lx+6*k, ly+th/2+0.5*k);
-  });
-  // you marker
-  c.fillStyle="#07070C"; c.strokeStyle="#00E7FF"; c.lineWidth=1.5*k;
+}
+function drawOverlay(){
+  const c = ctx, k = S.W / Math.max(1, cv.clientWidth), W = S.W, H = S.H, objs = S.objs;
+  const ax = W/2, ay = H - 6*k, compact = cv.clientWidth < 640;
+  if (objs.length){
+    const fs = objs.map(pullOnYou), lmin = Math.log10(Math.min(...fs)), lmax = Math.log10(Math.max(...fs));
+    const sel = objs.find(o => o.id === S.sel);
+    objs.forEach((o,i) => {
+      const t = lmax - lmin < 1e-9 ? 1 : (Math.log10(fs[i]) - lmin)/(lmax - lmin), [x,y,w,h] = o.bbox;
+      c.strokeStyle = `rgba(0,231,255,${(0.12+0.78*t).toFixed(3)})`; c.lineWidth = (0.8+2*t)*k;
+      c.beginPath(); c.moveTo(ax, ay); c.lineTo(x+w/2, y+h); c.stroke();
+    });
+    if (sel){
+      const [sx,sy,sw,sh] = sel.bbox;
+      c.setLineDash([4*k, 5*k]); c.strokeStyle = "rgba(139,92,255,.75)"; c.lineWidth = 1.2*k;
+      objs.forEach(o => { if (o === sel) return; const [x,y,w,h] = o.bbox; c.beginPath(); c.moveTo(sx+sw/2, sy+sh/2); c.lineTo(x+w/2, y+h/2); c.stroke(); });
+      c.setLineDash([]);
+    }
+    c.font = `500 ${11*k}px "Geist Mono", ui-monospace, monospace`; c.textBaseline = "middle";
+    objs.forEach(o => {
+      const [x,y,w,h] = o.bbox, isSel = o === sel, L = Math.min(18*k, w/3, h/3);
+      c.strokeStyle = isSel ? "#B9FF38" : o.src === "id" ? "rgba(139,92,255,.9)" : "rgba(233,236,242,.55)"; c.lineWidth = (isSel ? 2 : 1.2)*k;
+      c.beginPath();
+      c.moveTo(x,y+L); c.lineTo(x,y); c.lineTo(x+L,y);
+      c.moveTo(x+w-L,y); c.lineTo(x+w,y); c.lineTo(x+w,y+L);
+      c.moveTo(x+w,y+h-L); c.lineTo(x+w,y+h); c.lineTo(x+w-L,y+h);
+      c.moveTo(x+L,y+h); c.lineTo(x,y+h); c.lineTo(x,y+h-L);
+      c.stroke();
+      if (isSel){ c.fillStyle = "rgba(185,255,56,.05)"; c.fillRect(x,y,w,h); }
+      if (compact && !isSel) return;
+      const txt = `${o.cls.toUpperCase()}  ${fmtM(dist(o))}`, tw = c.measureText(txt).width + 12*k, th = 18*k;
+      let lx = Math.min(Math.max(0, x), W - tw), ly = y - th - 3*k; if (ly < 28*k) ly = y + 3*k;
+      c.fillStyle = isSel ? "#B9FF38" : "rgba(7,7,12,.82)"; c.fillRect(lx, ly, tw, th);
+      c.fillStyle = isSel ? "#07070C" : "#E9ECF2"; c.fillText(txt, lx+6*k, ly+th/2+0.5*k);
+    });
+  }
+  if (S.pending){
+    const [x,y,w,h] = S.pending; c.setLineDash([6*k,6*k]); c.strokeStyle = "#00E7FF"; c.lineWidth = 1.5*k; c.strokeRect(x,y,w,h); c.setLineDash([]);
+  }
+  c.fillStyle = "#07070C"; c.strokeStyle = "#00E7FF"; c.lineWidth = 1.5*k;
   c.beginPath(); c.arc(ax, ay-2*k, 6*k, 0, Math.PI*2); c.fill(); c.stroke();
-  c.font = `500 ${10*k}px "Geist Mono", monospace`; c.fillStyle="#00E7FF"; c.textAlign="center";
-  c.fillText("YOU", ax, ay-18*k); c.textAlign="left";
+  c.font = `500 ${10*k}px "Geist Mono", monospace`; c.fillStyle = "#00E7FF"; c.textAlign = "center"; c.textBaseline = "alphabetic";
+  c.fillText("YOU", ax, ay-18*k); c.textAlign = "left";
 }
 function drawCrosshair(){
-  const k = S.W / Math.max(1, cv.clientWidth), x=S.W/2, y=S.H/2, c=ctx;
-  c.strokeStyle="rgba(233,236,242,.7)"; c.lineWidth=1*k;
+  const k = S.W / Math.max(1, cv.clientWidth), x = S.W/2, y = S.H/2, c = ctx;
+  c.strokeStyle = "rgba(233,236,242,.8)"; c.lineWidth = 1*k;
   c.beginPath(); c.moveTo(x-14*k,y); c.lineTo(x-4*k,y); c.moveTo(x+4*k,y); c.lineTo(x+14*k,y);
   c.moveTo(x,y-14*k); c.lineTo(x,y-4*k); c.moveTo(x,y+4*k); c.lineTo(x,y+14*k); c.stroke();
 }
 function draw(){
   if (S.mode === "demo") drawDemo();
-  else if (S.mode === "live" && S.stream) { if (S.frozen && S.still) ctx.drawImage(S.still, 0, 0, S.W, S.H); else if (vid.readyState >= 2) ctx.drawImage(vid, 0, 0, S.W, S.H); }
+  else if (S.mode === "live" && S.stream){
+    if (S.frozen && S.still) ctx.drawImage(S.still, 0, 0, S.W, S.H);
+    else if (vid.readyState >= 2) drawBoosted(ctx, vid, S.W, S.H, S.boost);
+  }
   else if (S.mode === "photo" && S.photo) ctx.drawImage(S.photo, 0, 0, S.W, S.H);
-  else { ctx.fillStyle="#07070C"; ctx.fillRect(0,0,S.W,S.H); }
+  else { ctx.fillStyle = "#07070C"; ctx.fillRect(0, 0, S.W, S.H); }
   drawOverlay();
   if (S.mode === "live" && S.stream) drawCrosshair();
 }
 
 // ---------- selection panel ----------
-const typeSel = $("fType");
-typeSel.innerHTML = Object.keys(T).sort().map(k => `<option value="${esc(k)}">${esc(k)}</option>`).join("");
-let panelFor = null;
+$("catalog").innerHTML = Object.keys(CAT).sort().map(k => `<option value="${esc(k)}"></option>`).join("");
+const typeInp = $("fType");
+let panelFor = null, scaleKey = "";
 const DMIN = 0.1, DMAX = 30;
 const d2r = d => Math.round(1000*Math.log(d/DMIN)/Math.log(DMAX/DMIN));
 const r2d = r => DMIN*Math.pow(DMAX/DMIN, r/1000);
+const cur = () => S.objs.find(x => x.id === S.sel);
 
 function renderScale(F){
-  const lo=-14.5, hi=-4, p = v => ((Math.log10(v)-lo)/(hi-lo)*100);
-  const pf = Math.max(0, Math.min(100, p(F)));
-  $("sScale").innerHTML = `<div class="track"></div><div class="fill" style="width:${pf}%"></div>` +
-    REFS.map((r,i) => `<div class="tick" style="left:${p(r[1])}%"></div><div class="tl ${i%2?'dn':'up'}" style="left:${Math.min(94,Math.max(6,p(r[1])))}%">${r[2]}</div>`).join("") +
-    `<div class="pin" style="left:${pf}%"></div>`;
+  const lo = -14.5, hi = -4, p = v => (Math.log10(v)-lo)/(hi-lo)*100, pf = Math.max(0, Math.min(100, p(F)));
+  if (!scaleKey){
+    $("sScale").innerHTML = `<div class="track"></div><div class="fill" id="scFill"></div>` +
+      REFS.map((r,i) => `<div class="tick" style="left:${p(r[1])}%"></div><div class="tl ${i%2?'dn':'up'}" style="left:${Math.min(94,Math.max(6,p(r[1])))}%">${r[2]}</div>`).join("") +
+      `<div class="pin" id="scPin"></div>`;
+    scaleKey = "built";
+  }
+  $("scFill").style.width = pf + "%"; $("scPin").style.left = pf + "%";
 }
 function compare(F){
   let best = REFS[0];
@@ -565,13 +613,21 @@ function compare(F){
   return `About ${ratio < 10 ? ratio.toFixed(1) : Math.round(ratio).toLocaleString()}× the weight of ${best[0]}`;
 }
 function renderSel(full){
-  const o = S.objs.find(x => x.id === S.sel);
+  const o = cur();
   $("selEmpty").hidden = !!o; $("selBody").hidden = !o;
-  if (!o) { panelFor = null; return; }
+  if (!o){ panelFor = null; return; }
   const m = mass(o), d = dist(o), F = pullOnYou(o), gl = localG(S.lat, S.alt);
-  $("sName").textContent = name(o);
-  const src = o.dMode === "tilt" ? ["tilt","Distance: rangefinder"] : o.dMode === "manual" ? ["manual","Distance: set by hand"] : ["", S.mode==="demo" ? "Distance: demo layout" : "Distance: apparent size"];
-  $("sChips").innerHTML = `<span class="chip">${S.mode==="demo"?"demo object":"confidence "+Math.round(o.score*100)+"%"}</span><span class="chip ${src[0]}">${src[1]}</span>` + (o.mass!=null ? `<span class="chip manual">mass set by hand</span>` : "");
+  $("sName").textContent = o.cls;
+  const dsrc = o.dMode === "tilt" ? ["tilt","Distance: rangefinder"] : o.dMode === "manual" ? ["manual","Distance: set by hand"]
+    : o.src === "demo" ? ["","Distance: demo layout"] : o.src === "id" ? ["","Distance: rough, from tap area"] : ["","Distance: apparent size"];
+  const chips = [
+    o.src === "demo" ? "demo object" : o.src === "id" ? `identified ${Math.round(o.score*100)}%` : `detected ${Math.round(o.score*100)}%`
+  ].map(t => `<span class="chip">${esc(t)}</span>`);
+  chips.push(`<span class="chip ${dsrc[0]}">${dsrc[1]}</span>`);
+  if (o.note) chips.push(`<span class="chip">${esc(o.note)}</span>`);
+  if (o.mass != null) chips.push(`<span class="chip manual">mass set by hand</span>`);
+  else if (!CAT[o.cls]) chips.push(`<span class="chip" style="color:var(--coral);border-color:rgba(255,65,108,.45)">mass unknown, set it</span>`);
+  $("sChips").innerHTML = chips.join("");
   $("sForce").innerHTML = `${sci(F)}<small>N</small>`;
   $("sCmp").textContent = compare(F);
   $("sCmp2").textContent = `Earth pulls you ${sci(S.you*gl/F,1)} times harder.`;
@@ -581,174 +637,345 @@ function renderSel(full){
   = 6.674×10⁻¹¹ · ${+m.toPrecision(4)} kg · ${S.you} kg / (${d.toFixed(2)} m)²
   = ${sci(F,3)} N
 
-m₁ is the ${name(o)}, m₂ is you, r is the distance between you.`;
-  const others = S.objs.filter(x => x !== o).map(x => ({x, r: between(o,x)})).map(e => ({...e, F: force(m, mass(e.x), e.r)})).sort((a,b)=>b.F-a.F).slice(0,4);
-  $("sNb").innerHTML = others.length ? others.map(e => `<li><span style="text-transform:capitalize">${esc(name(e.x))} · ${fmtM(e.r)}</span><span>${sci(e.F)} N</span></li>`).join("") : `<li><span class="small" style="margin:0">No other objects in view.</span></li>`;
+m₁ is the ${o.cls}, m₂ is you, r is the distance between you.`;
+  const others = S.objs.filter(x => x !== o).map(x => { const r = between(o, x); return { x, r, F: force(m, mass(x), r) }; }).sort((a,b) => b.F - a.F).slice(0, 4);
+  $("sNb").innerHTML = others.length ? others.map(e => `<li><span style="text-transform:capitalize">${esc(e.x.cls)} · ${fmtM(e.r)}</span><span>${sci(e.F)} N</span></li>`).join("")
+    : `<li><span class="small" style="margin:0">No other objects in view.</span></li>`;
   const active = document.activeElement;
-  if (full || panelFor !== o.id) {
-    typeSel.value = T[o.cls] ? o.cls : "person";
-  }
+  if ((full || panelFor !== o.id) && active !== typeInp) typeInp.value = o.cls;
   if (active !== $("fMass")) $("fMass").value = +m.toPrecision(4);
   if (active !== $("fDist")) $("fDist").value = d.toFixed(2);
   if (active !== $("fDistR")) $("fDistR").value = d2r(d);
   $("fSrc").textContent = o.dMode === "size" ? "Drag to set the distance yourself." : `Estimate was ${fmtM(distEst(o))}.`;
   $("fReset").hidden = o.dMode === "size" && o.mass == null;
+  const canId = S.mode !== "demo" && o.src !== "demo" && !inFrame;
+  $("refine").hidden = !canId;
   panelFor = o.id;
 }
+
+// Ranking rows are reused by id, so a tap never lands on a row that was just replaced.
+const rankRows = new Map();
 function renderRank(){
-  const list = S.objs.map(o => ({o, F: pullOnYou(o)})).sort((a,b)=>b.F-a.F);
+  const ul = $("rank"), list = S.objs.map(o => ({ o, F: pullOnYou(o) })).sort((a,b) => b.F - a.F);
   $("rCount").textContent = `${list.length} tracked`;
-  if (!list.length) { $("rank").innerHTML = `<li class="small" style="padding:8px 10px">No objects yet.</li>`; }
-  else {
+  $("rankEmpty").hidden = list.length > 0;
+  const ids = new Set(list.map(e => e.o.id));
+  for (const [id, li] of rankRows) if (!ids.has(id)){ li.remove(); rankRows.delete(id); }
+  if (list.length){
     const lmax = Math.log10(list[0].F), lmin = Math.log10(list[list.length-1].F) - 1;
-    $("rank").innerHTML = list.map(({o,F}) => `<li><button data-id="${o.id}" aria-current="${o.id===S.sel}">
-      <span class="nm">${esc(name(o))}</span><span class="fv">${sci(F)} N</span>
-      <span class="meta">${fmtKg(mass(o))} · ${fmtM(dist(o))}</span><span></span>
-      <span class="bar"><i style="width:${Math.max(3,(Math.log10(F)-lmin)/(lmax-lmin)*100).toFixed(1)}%"></i></span></button></li>`).join("");
+    list.forEach(({o, F}, i) => {
+      let li = rankRows.get(o.id);
+      if (!li){
+        li = document.createElement("li");
+        li.innerHTML = `<button data-id="${o.id}"><span class="nm"></span><span class="fv"></span><span class="meta"></span><span></span><span class="bar"><i></i></span></button>`;
+        rankRows.set(o.id, li);
+      }
+      const b = li.firstChild;
+      b.setAttribute("aria-current", o.id === S.sel);
+      b.children[0].textContent = o.cls;
+      b.children[1].textContent = `${sci(F)} N`;
+      b.children[2].textContent = `${fmtKg(mass(o))} · ${fmtM(dist(o))}`;
+      b.children[4].firstChild.style.width = Math.max(3, (Math.log10(F)-lmin)/(lmax-lmin)*100).toFixed(1) + "%";
+      if (ul.children[i] !== li) ul.insertBefore(li, ul.children[i] || null);
+    });
   }
+}
+function renderSky(){
   const sk = sky(new Date()), fs = force(1.989e30, S.you, sk.sunM), fm = force(7.342e22, S.you, sk.moonM), gl = localG(S.lat, S.alt);
   const lmx = Math.log10(fs), lmn = Math.log10(fm) - 1;
   $("skyRank").innerHTML = [["Sun", fs, `${sk.sunAU.toFixed(4)} AU`], ["Moon", fm, `${Math.round(sk.moonKm).toLocaleString()} km`]].map(([n,F,d]) =>
-    `<li><button tabindex="-1" style="cursor:default"><span class="nm">${n}</span><span class="fv">${sci(F,3)} N</span><span class="meta">${d}</span><span></span><span class="bar"><i style="width:${((Math.log10(F)-lmn)/(lmx-lmn)*100).toFixed(1)}%"></i></span></button></li>`).join("");
+    `<li><div class="skyrow"><span class="nm">${n}</span><span class="fv">${sci(F,3)} N</span><span class="meta">${d}</span><span></span><span class="bar"><i style="width:${((Math.log10(F)-lmn)/(lmx-lmn)*100).toFixed(1)}%"></i></span></div></li>`).join("");
   $("earthCmp").textContent = `For comparison, Earth pulls you with ${(S.you*gl).toFixed(1)} N.`;
-  // sky card
-  $("skyDate").textContent = new Date().toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"});
+  $("skyDate").textContent = new Date().toLocaleDateString(undefined, { month:"short", day:"numeric", year:"numeric" });
   $("sunF").innerHTML = `${sci(fs,3)}<small>N from the Sun</small>`;
   $("skyKv").innerHTML = `<dt>Sun distance</dt><dd>${sk.sunAU.toFixed(4)} AU</dd><dt>Moon pull</dt><dd>${sci(fm,3)} N</dd><dt>Moon distance</dt><dd>${Math.round(sk.moonKm).toLocaleString()} km</dd><dt>Sun vs Moon</dt><dd>${Math.round(fs/fm)}×</dd>`;
 }
-function renderAll(full){ renderSel(full); renderRank(); }
+function renderAll(full){ renderSel(full); renderRank(); renderTilt(); }
 
 $("rank").addEventListener("click", e => { const b = e.target.closest("button[data-id]"); if (!b) return; S.sel = +b.dataset.id; renderAll(true); draw(); });
-typeSel.addEventListener("change", () => { const o = cur(); if (!o) return; o.cls = typeSel.value; o.label = null; o.mass = null; renderAll(true); draw(); });
-$("fMass").addEventListener("input", e => { const o = cur(), v = parseFloat(e.target.value); if (!o || !(v>0)) return; o.mass = v; renderAll(); draw(); });
-$("fDist").addEventListener("input", e => { const o = cur(), v = parseFloat(e.target.value); if (!o || !(v>=0.05)) return; o.dMode="manual"; o.d=v; renderAll(); draw(); });
-$("fDistR").addEventListener("input", e => { const o = cur(); if (!o) return; o.dMode="manual"; o.d=+r2d(+e.target.value).toFixed(2); renderAll(); draw(); });
-$("fReset").addEventListener("click", () => { const o = cur(); if (!o) return; o.dMode="size"; o.mass=null; renderAll(true); draw(); });
+typeInp.addEventListener("change", () => {
+  const o = cur(), v = typeInp.value.trim().toLowerCase(); if (!o || !v) return;
+  o.cls = v; o.mass = null; o.note = null; renderAll(true); draw();
+});
+$("fMass").addEventListener("input", e => { const o = cur(), v = parseFloat(e.target.value); if (!o || !(v > 0)) return; o.mass = v; renderAll(); draw(); });
+$("fDist").addEventListener("input", e => { const o = cur(), v = parseFloat(e.target.value); if (!o || !(v >= 0.05)) return; o.dMode = "manual"; o.d = v; renderAll(); draw(); });
+$("fDistR").addEventListener("input", e => { const o = cur(); if (!o) return; o.dMode = "manual"; o.d = +r2d(+e.target.value).toFixed(2); renderAll(); draw(); });
+$("fReset").addEventListener("click", () => { const o = cur(); if (!o) return; o.dMode = "size"; o.mass = null; renderAll(true); draw(); });
 $("youMass").value = S.you;
-$("youMass").addEventListener("input", e => { const v = parseFloat(e.target.value); if (v>0){ S.you=v; store.set("you",v); renderAll(); draw(); } });
-const cur = () => S.objs.find(x => x.id === S.sel);
+$("youMass").addEventListener("input", e => { const v = parseFloat(e.target.value); if (v > 0){ S.you = v; store.set("you", v); renderAll(); renderSky(); draw(); } });
 
-// tap to select
-cv.addEventListener("pointerdown", e => {
-  const r = cv.getBoundingClientRect(), x = (e.clientX-r.left)*S.W/r.width, y = (e.clientY-r.top)*S.H/r.height;
-  const hits = S.objs.filter(o => x>=o.bbox[0] && x<=o.bbox[0]+o.bbox[2] && y>=o.bbox[1] && y<=o.bbox[1]+o.bbox[3]).sort((a,b)=>a.bbox[2]*a.bbox[3]-b.bbox[2]*b.bbox[3]);
-  let pick = hits[0];
-  if (!pick && S.objs.length){
-    const near = S.objs.map(o => ({o, dd: Math.hypot(o.bbox[0]+o.bbox[2]/2-x, o.bbox[1]+o.bbox[3]/2-y)})).sort((a,b)=>a.dd-b.dd)[0];
-    if (near.dd < S.W*0.12) pick = near.o;
-  }
-  if (pick){ S.sel = pick.id; renderAll(true); draw(); }
+// ---------- tap: select a box, or identify whatever is under an empty spot ----------
+cv.addEventListener("click", e => {
+  const r = cv.getBoundingClientRect(), x = (e.clientX - r.left)*S.W/r.width, y = (e.clientY - r.top)*S.H/r.height;
+  const hits = S.objs.filter(o => x >= o.bbox[0] && x <= o.bbox[0]+o.bbox[2] && y >= o.bbox[1] && y <= o.bbox[1]+o.bbox[3])
+    .sort((a,b) => a.bbox[2]*a.bbox[3] - b.bbox[2]*b.bbox[3]);
+  if (hits[0]){ S.sel = hits[0].id; renderAll(true); draw(); return; }
+  if (S.mode === "demo") return;
+  identifyAt(x, y);
 });
 
-// ---------- detector ----------
-function loadScript(src){ return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = () => rej(new Error(src)); document.head.appendChild(s); }); }
+// ---------- models ----------
+function loadScript(src){ return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = () => { s.remove(); rej(new Error(src)); }; document.head.appendChild(s); }); }
+async function loadLib(srcs, globalName){
+  if (window[globalName]) return;
+  let err; for (const s of srcs){ try { await loadScript(s); if (window[globalName]) return; } catch(e){ err = e; } }
+  throw err || new Error("Could not load " + globalName);
+}
+async function ensureTf(){
+  await loadLib(CONFIG.tf, "tf");
+  if (!S.tfReady){ try { tf.enableProdMode(); await tf.setBackend("webgl"); } catch(e){} await tf.ready(); S.tfReady = true; }
+}
 async function ensureModel(){
   if (S.model) return S.model;
-  if (S.modelPromise) return S.modelPromise;
-  S.modelPromise = (async () => {
+  if (!S.modelPromise) S.modelPromise = (async () => {
     setHud("busy", "Loading detector");
-    if (!window.cocoSsd) {
-      try { for (const s of CONFIG.libs) await loadScript(s); }
-      catch(e){ for (const s of CONFIG.libsFallback) await loadScript(s); }
-    }
+    await ensureTf(); await loadLib(CONFIG.cocoSsd, "cocoSsd");
     let m;
-    try { m = CONFIG.modelUrl ? await cocoSsd.load({ modelUrl: CONFIG.modelUrl }) : await cocoSsd.load({ base: "mobilenet_v2" }); }
-    catch(e){ m = await cocoSsd.load({ base: "lite_mobilenet_v2" }); }
+    try { m = await cocoSsd.load({ modelUrl: CONFIG.cocoModel }); }
+    catch(e){ m = await cocoSsd.load({ base: "mobilenet_v2" }); }
     S.model = m; setHud("on", "Detector ready"); return m;
-  })();
-  try { return await S.modelPromise; } catch(e){ S.modelPromise = null; setHud("warn", "Detector failed to load"); throw e; }
+  })().catch(e => { S.modelPromise = null; setHud("warn", "Detector failed to load"); throw e; });
+  return S.modelPromise;
+}
+async function ensureClassifier(){
+  if (S.clf) return S.clf;
+  if (!S.clfPromise) S.clfPromise = (async () => {
+    await ensureTf(); await loadLib(CONFIG.mobilenet, "mobilenet");
+    try { S.clf = await mobilenet.load({ version: 2, alpha: 1.0 }); }
+    catch(e){ S.clf = await mobilenet.load({ version: 1, alpha: 1.0 }); }
+    return S.clf;
+  })().catch(e => { S.clfPromise = null; throw e; });
+  return S.clfPromise;
 }
 function setHud(state, text){ $("hudR").innerHTML = `<span class="dot ${state}"></span>${esc(text)}`; }
+
+// Classify a region of the current frame with MobileNet (1,000 ImageNet classes).
+const crop = document.createElement("canvas"); crop.width = crop.height = 224; const cctx = crop.getContext("2d");
+function frameSource(){
+  if (S.mode === "photo") return S.photo;
+  if (S.mode === "live"){
+    if (S.frozen && S.still) return S.still;
+    const c = document.createElement("canvas"); c.width = S.W; c.height = S.H; drawBoosted(c.getContext("2d"), vid, S.W, S.H, S.boost); return c;
+  }
+  return null;
+}
+async function classifyRegion(src, [x, y, w, h]){
+  const side = Math.max(w, h) * 1.1, cx = x + w/2, cy = y + h/2;
+  cctx.fillStyle = "#000"; cctx.fillRect(0, 0, 224, 224);
+  cctx.drawImage(src, cx - side/2, cy - side/2, side, side, 0, 0, 224, 224);
+  const clf = await ensureClassifier();
+  const probs = tf.tidy(() => tf.softmax(clf.infer(crop, false)));
+  const p = await probs.data(); probs.dispose();
+  const top = [...p.keys()].sort((a,b) => p[b] - p[a]).slice(0, 5);
+  // prefer the best guess that maps to a known mass, if it's close to the top guess
+  const mapped = top.find(i => IMN[i] && p[i] >= p[top[0]] * 0.5);
+  const i = mapped != null ? mapped : top[0];
+  return { name: IMN[i] || IN_LABELS[i].toLowerCase(), prob: p[i], known: IMN[i] != null, alt: top.slice(0,3).map(j => `${IMN[j] || IN_LABELS[j]} ${Math.round(p[j]*100)}%`) };
+}
+async function identifyAt(x, y){
+  if (inFrame){ $("hudB").textContent = "The detailed identifier can't download in this preview. It works on the GitHub version."; return; }
+  if (S.mode === "live" && !S.frozen) setFrozen(true);
+  const src = frameSource(); if (!src) return;
+  const side = Math.min(S.W, S.H) * 0.34, box = [Math.max(0, Math.min(S.W - side, x - side/2)), Math.max(0, Math.min(S.H - side, y - side/2)), side, side];
+  S.pending = box; draw(); setHud("busy", S.clf ? "Identifying" : "Loading identifier");
+  try {
+    const r = await classifyRegion(src, box);
+    const o = newObj({ cls: r.name, bbox: box, score: r.prob, seen: Infinity, src: "id", note: r.prob < 0.25 ? "low confidence" : null, alts: r.alt });
+    S.objs.push(o); S.sel = o.id;
+    setHud("on", `Identified: ${r.name}`);
+    $("hudB").textContent = r.prob < 0.25 ? `Not sure. Top guesses: ${r.alt.join(", ")}. Fix the type in the panel if it's wrong.` : "Check the distance in the panel. A tap area gives only a rough distance.";
+  } catch(e){
+    setHud("warn", "Identifier unavailable"); $("hudB").textContent = "Couldn't download the identifier model. Check your connection and try again.";
+  }
+  S.pending = null; renderAll(true); draw();
+}
+async function refineObj(o, quiet){
+  const src = frameSource(); if (!src) return false;
+  try {
+    const r = await classifyRegion(src, o.bbox);
+    if (!r.known || r.prob < (quiet ? 0.4 : 0.15)) { if (!quiet) $("hudB").textContent = `Identifier guesses: ${r.alt.join(", ")}. Kept "${o.cls}".`; return false; }
+    if (r.name !== o.cls){ o.note = `was ${o.detCls || o.cls}`; o.cls = r.name; o.mass = null; }
+    if (!quiet) $("hudB").textContent = `Identified as ${r.name} (${Math.round(r.prob*100)}%).`;
+    return true;
+  } catch(e){ if (!quiet) $("hudB").textContent = "Couldn't download the identifier model. Check your connection and try again."; return false; }
+}
+$("refine").addEventListener("click", async () => {
+  const o = cur(); if (!o) return;
+  const b = $("refine"); b.disabled = true; b.textContent = "…";
+  if (S.mode === "live" && !S.frozen) setFrozen(true);
+  await refineObj(o, false);
+  b.disabled = false; b.textContent = "Identify"; renderAll(true); draw();
+});
+
 function iou(a, b){
-  const x1=Math.max(a[0],b[0]), y1=Math.max(a[1],b[1]), x2=Math.min(a[0]+a[2],b[0]+b[2]), y2=Math.min(a[1]+a[3],b[1]+b[3]);
+  const x1 = Math.max(a[0],b[0]), y1 = Math.max(a[1],b[1]), x2 = Math.min(a[0]+a[2],b[0]+b[2]), y2 = Math.min(a[1]+a[3],b[1]+b[3]);
   const inter = Math.max(0,x2-x1)*Math.max(0,y2-y1); return inter/(a[2]*a[3]+b[2]*b[3]-inter);
 }
 function merge(dets, smooth){
   const now = performance.now(), used = new Set();
   dets.forEach(d => {
-    let best=null, bi=0.2;
-    S.objs.forEach(o => { if (used.has(o)) return; if (o.detCls !== d.class) return; const v = iou(o.bbox, d.bbox); if (v > bi){ bi=v; best=o; } });
-    if (best){ used.add(best); best.bbox = smooth ? best.bbox.map((v,i)=>v*0.5+d.bbox[i]*0.5) : d.bbox; best.score=d.score; best.seen=now; }
-    else { const o = { id:S.nextId++, cls:d.class, detCls:d.class, label:null, mass:null, bbox:d.bbox, dMode:"size", d:1, score:d.score, seen:now }; S.objs.push(o); used.add(o); }
+    let best = null, bi = 0.2;
+    S.objs.forEach(o => { if (used.has(o) || o.detCls !== d.class) return; const v = iou(o.bbox, d.bbox); if (v > bi){ bi = v; best = o; } });
+    if (best){ used.add(best); best.bbox = smooth ? best.bbox.map((v,i) => v*0.5 + d.bbox[i]*0.5) : d.bbox; best.score = d.score; best.seen = now; }
+    else { const o = newObj({ cls: d.class, detCls: d.class, bbox: d.bbox, score: d.score, seen: now }); S.objs.push(o); used.add(o); }
   });
   S.objs = S.objs.filter(o => now - o.seen < (o.id === S.sel ? 4000 : 1200));
-  if (!S.objs.some(o => o.id === S.sel)) S.sel = S.objs.length ? S.objs.slice().sort((a,b)=>pullOnYou(b)-pullOnYou(a))[0].id : null;
+  if (!S.objs.some(o => o.id === S.sel)) S.sel = S.objs.length ? S.objs.reduce((a,b) => pullOnYou(b) > pullOnYou(a) ? b : a).id : null;
+}
+// Run the detector on a downscaled, brightened copy of the frame: faster, and dim rooms detect better.
+async function detectFrame(src, sw, sh, maxBoxes, minScore, boost){
+  const sc = Math.min(1, CONFIG.detectLongSide / Math.max(sw, sh)), w = Math.round(sw*sc), h = Math.round(sh*sc);
+  if (det.width !== w) det.width = w; if (det.height !== h) det.height = h;
+  drawBoosted(dctx, src, w, h, boost);
+  const dets = await S.model.detect(det, maxBoxes, minScore);
+  dets.forEach(d => { d.bbox = d.bbox.map(v => v / sc); });
+  return dets;
 }
 
 // ---------- modes ----------
 function setMode(m){
   if (S.mode === "live" && m !== "live") stopCam();
-  S.mode = m; S.frozen = false;
+  S.mode = m; S.frozen = false; S.still = null; S.pending = null;
   document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === m));
-  $("freeze").hidden = true; $("newPhoto").hidden = true; $("drop").hidden = true;
+  ["freeze","identify","torch","newPhoto","boostWrap","evWrap"].forEach(id => $(id).hidden = true);
+  $("tools").hidden = m === "demo"; $("drop").hidden = true;
   if (m === "demo"){ loadDemo(); $("hudL").textContent = "Demo · schematic room"; setHud("on","Ready"); $("hudB").textContent = "Tap any object. Cyan lines are its pull on you; brighter is stronger."; }
-  if (m === "live"){ S.objs=[]; S.sel=null; $("hudL").textContent = "Live · rear camera"; $("hudB").textContent = "Point at a room. Freeze to inspect."; startCam(); }
-  if (m === "photo"){ S.objs=[]; S.sel=null; S.photo=null; $("hudL").textContent = "Photo"; setHud("", "Waiting for photo"); $("hudB").textContent = "Take or choose a photo of a room.";
-    showDrop("Scan a photo", "Take a picture of a room or pick one from your library. Detection runs on this device.", "Take or choose photo", () => $("file").click()); ensureModel().catch(()=>{}); }
+  if (m === "live"){ S.objs = []; S.sel = null; setSize(1280, 720); $("hudL").textContent = "Live · rear camera"; $("hudB").textContent = "Point at a room. Tap an unlabeled thing to identify it."; startCam(); }
+  if (m === "photo"){
+    S.objs = []; S.sel = null; S.photo = null; setSize(1200, 900); $("hudL").textContent = "Photo"; setHud("", "Waiting for photo");
+    $("hudB").textContent = "Take or choose a photo of a room.";
+    showDrop("Scan a photo", "Take a picture of a room or pick one from your library. Detection runs on this device.", "Take or choose photo", () => $("file").click());
+    ensureModel().catch(() => {});
+  }
   renderAll(true); draw();
 }
 function showDrop(title, text, btn, fn){
   const d = $("drop"); d.hidden = false;
-  d.innerHTML = `<div><div class="eyebrow">${esc(title)}</div><p>${esc(text)}</p>${btn?`<button class="cta" id="dropBtn">${esc(btn)}</button>`:""}</div>`;
+  d.innerHTML = `<div><div class="eyebrow">${esc(title)}</div><p>${esc(text)}</p>${btn ? `<button class="cta" id="dropBtn">${esc(btn)}</button>` : ""}</div>`;
   if (btn) $("dropBtn").onclick = fn;
 }
-document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
+document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => { if (b.dataset.mode !== S.mode || b.dataset.mode === "photo") setMode(b.dataset.mode); }));
 
 async function startCam(){
-  S.W = 1280; S.H = 720;
-  if (!navigator.mediaDevices?.getUserMedia){ camFail("This browser has no camera access here."); return; }
+  const myLoop = ++S.loopId;
+  if (!navigator.mediaDevices?.getUserMedia){ camFail("This browser doesn't allow camera access here."); return; }
   setHud("busy", "Starting camera");
   try {
-    S.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
-  } catch(e){ camFail(inFrame ? "This preview blocks the camera. Use Photo here, or open the standalone file in Safari for live mode." : "Camera permission was denied. Allow camera access for this site in Safari settings, then try again."); return; }
-  if (S.mode !== "live"){ stopCam(); return; }
-  vid.srcObject = S.stream; vid.hidden = true; await vid.play().catch(()=>{});
-  await new Promise(r => vid.videoWidth ? r() : vid.addEventListener("loadedmetadata", r, {once:true}));
-  S.W = vid.videoWidth; S.H = vid.videoHeight; S.f = focal(S.W, S.H); cv.width = S.W; cv.height = S.H;
-  $("freeze").hidden = false; $("freeze").textContent = "Freeze";
-  try { S.wake = await navigator.wakeLock?.request("screen"); } catch(e){}
+    S.stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } } });
+  } catch(e){
+    camFail(inFrame ? "This preview blocks the camera. Use Photo here, or open the GitHub version for live mode."
+      : "Camera access was denied. Allow it for this site in Settings → Apps → Safari → Camera, then reload.");
+    return;
+  }
+  if (S.mode !== "live" || myLoop !== S.loopId){ stopCam(); return; }
+  S.track = S.stream.getVideoTracks()[0];
+  vid.srcObject = S.stream; await vid.play().catch(() => {});
+  if (!vid.videoWidth) await new Promise(r => vid.addEventListener("loadedmetadata", r, { once:true }));
+  setSize(vid.videoWidth, vid.videoHeight);
+  setupCamControls();
+  ["freeze","identify","boostWrap"].forEach(id => $(id).hidden = false); $("freeze").textContent = "Freeze";
+  requestWake();
+  loop(myLoop);
   try { await ensureModel(); } catch(e){ return; }
-  setHud("on", "Scanning");
-  loop();
+  if (myLoop === S.loopId) setHud("on", "Scanning");
 }
+vid.addEventListener("resize", () => { if (S.mode === "live" && vid.videoWidth && !S.frozen) setSize(vid.videoWidth, vid.videoHeight); });
 function camFail(msg){ setHud("warn", "Camera unavailable"); showDrop("Live camera", msg, "Switch to Photo", () => setMode("photo")); }
-function stopCam(){ S.stream?.getTracks().forEach(t => t.stop()); S.stream = null; vid.srcObject = null; try{ S.wake?.release(); }catch(e){} S.wake=null; }
-async function loop(){
-  if (S.mode !== "live" || !S.stream) return;
-  if (!S.frozen){
-    if (!S.busy && S.model && vid.readyState >= 2){
+function stopCam(){
+  S.loopId++; S.stream?.getTracks().forEach(t => t.stop()); S.stream = null; S.track = null; vid.srcObject = null; S.torch = false;
+  try { S.wake?.release(); } catch(e){} S.wake = null;
+}
+async function requestWake(){ try { S.wake = await navigator.wakeLock?.request("screen"); } catch(e){} }
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && S.stream) requestWake(); });
+
+// Hardware controls where the camera exposes them; software brightness always.
+function setupCamControls(){
+  const caps = S.track?.getCapabilities?.() || {};
+  $("torch").hidden = !caps.torch; $("torch").setAttribute("aria-pressed", "false");
+  if (caps.exposureCompensation && caps.exposureCompensation.max > caps.exposureCompensation.min){
+    const ev = $("ev"), c = caps.exposureCompensation;
+    ev.min = c.min; ev.max = c.max; ev.step = c.step || 0.1; ev.value = S.track.getSettings?.().exposureCompensation ?? 0;
+    $("evWrap").hidden = false;
+  }
+  $("boost").value = Math.round(S.manualBoost*100); $("autoBoost").checked = S.autoBoost; $("boost").disabled = S.autoBoost;
+}
+$("torch").addEventListener("click", async () => {
+  if (!S.track) return; S.torch = !S.torch;
+  try { await S.track.applyConstraints({ advanced: [{ torch: S.torch }] }); } catch(e){ S.torch = false; }
+  $("torch").setAttribute("aria-pressed", S.torch);
+});
+$("ev").addEventListener("input", e => { S.track?.applyConstraints({ advanced: [{ exposureMode: "continuous", exposureCompensation: +e.target.value }] }).catch(() => {}); });
+$("autoBoost").addEventListener("change", e => { S.autoBoost = e.target.checked; store.set("autoBoost", S.autoBoost); $("boost").disabled = S.autoBoost; if (!S.autoBoost) S.boost = S.manualBoost; });
+$("boost").addEventListener("input", e => { S.manualBoost = +e.target.value/100; store.set("boost", S.manualBoost); if (!S.autoBoost) S.boost = S.manualBoost; });
+// Auto brightness: measure the raw frame's average luminance and lift it toward mid-grey.
+function autoGain(){
+  lctx.drawImage(vid, 0, 0, 32, 32);
+  const d = lctx.getImageData(0, 0, 32, 32).data; let s = 0;
+  for (let i = 0; i < d.length; i += 4) s += 0.2126*d[i] + 0.7152*d[i+1] + 0.0722*d[i+2];
+  const mean = s / (d.length/4) / 255;
+  // screen blend with alpha a maps mean luminance m to about m + a*m*(1-m); solve for a to reach ~0.42
+  const target = 0.42, want = mean >= target ? 0 : (target - mean) / Math.max(0.02, mean*(1-mean));
+  S.boost = S.boost*0.8 + Math.min(2, Math.max(0, want))*0.2;
+  $("boost").value = Math.round(S.boost*100);
+}
+
+function loop(id){
+  if (id !== S.loopId || S.mode !== "live" || !S.stream) return;
+  const now = performance.now();
+  if (!S.frozen && vid.readyState >= 2 && document.visibilityState === "visible"){
+    if (S.autoBoost && now - (S.lastLum || 0) > 400){ S.lastLum = now; try { autoGain(); } catch(e){} }
+    if (!S.busy && S.model){
       S.busy = true;
-      S.model.detect(vid, 20, 0.45).then(d => { if (!S.frozen){ merge(d, true); } }).catch(()=>{}).finally(() => { S.busy = false; });
+      detectFrame(vid, S.W, S.H, 20, 0.45, S.boost)
+        .then(d => { if (!S.frozen && id === S.loopId) merge(d, true); })
+        .catch(() => {}).finally(() => { S.busy = false; });
     }
     draw();
-    const now = performance.now();
-    if (now - S.lastPanel > 250){ S.lastPanel = now; renderAll(); }
+    if (now - S.lastPanel > 250){ S.lastPanel = now; renderSel(); }
+    if (now - S.lastRank > 600){ S.lastRank = now; renderRank(); renderTilt(); }
   }
-  requestAnimationFrame(loop);
+  requestAnimationFrame(() => loop(id));
 }
-$("freeze").addEventListener("click", () => {
-  S.frozen = !S.frozen; $("freeze").textContent = S.frozen ? "Resume" : "Freeze";
-  if (S.frozen){ const c = document.createElement("canvas"); c.width = S.W; c.height = S.H; c.getContext("2d").drawImage(vid, 0, 0, S.W, S.H); S.still = c; S.objs.forEach(o => o.seen = Infinity); setHud("", "Frozen"); } else { const n = performance.now(); S.objs.forEach(o => o.seen = n); setHud("on","Scanning"); }
-  renderAll(true);
-});
+function setFrozen(on){
+  S.frozen = on; $("freeze").textContent = on ? "Resume" : "Freeze";
+  if (on){
+    const c = document.createElement("canvas"); c.width = S.W; c.height = S.H; drawBoosted(c.getContext("2d"), vid, S.W, S.H, S.boost);
+    S.still = c; S.objs.forEach(o => o.seen = Infinity); setHud("", "Frozen");
+  } else {
+    const n = performance.now(); S.objs = S.objs.filter(o => o.src !== "id"); S.objs.forEach(o => o.seen = n); S.still = null; setHud("on", "Scanning");
+  }
+  renderAll(true); draw();
+}
+$("freeze").addEventListener("click", () => setFrozen(!S.frozen));
+$("identify").addEventListener("click", () => identifyAt(S.W/2, S.H/2));
 
-$("file").addEventListener("change", async e => {
+$("file").addEventListener("change", e => {
   const file = e.target.files[0]; e.target.value = ""; if (!file) return;
   const url = URL.createObjectURL(file), img = new Image();
+  img.onerror = () => { URL.revokeObjectURL(url); showDrop("Photo", "That file couldn't be opened as an image. Try a JPEG or PNG.", "Choose another", () => $("file").click()); };
   img.onload = async () => {
     const sc = Math.min(1, 1600/Math.max(img.naturalWidth, img.naturalHeight));
     const c = document.createElement("canvas"); c.width = Math.round(img.naturalWidth*sc); c.height = Math.round(img.naturalHeight*sc);
     c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
-    S.photo = c; S.W = c.width; S.H = c.height; S.f = focal(S.W, S.H); cv.width = S.W; cv.height = S.H;
+    S.photo = c; setSize(c.width, c.height);
     $("drop").hidden = true; $("newPhoto").hidden = false; S.objs = []; S.sel = null; draw();
-    try { await ensureModel(); } catch(err){ showDrop("Photo", "The detector could not load. Check your connection and try again.", "Try again", () => $("file").click()); return; }
+    try { await ensureModel(); } catch(err){ showDrop("Photo", "The detector couldn't load. Check your connection and try again.", "Try again", () => $("file").click()); return; }
     setHud("busy", "Detecting");
-    const dets = await S.model.detect(c, 30, 0.35);
+    const dets = await detectFrame(c, c.width, c.height, 30, 0.35, 0);
     merge(dets, false); S.objs.forEach(o => o.seen = Infinity);
-    S.sel = S.objs.length ? S.objs.slice().sort((a,b)=>pullOnYou(b)-pullOnYou(a))[0].id : null;
+    S.sel = S.objs.length ? S.objs.reduce((a,b) => pullOnYou(b) > pullOnYou(a) ? b : a).id : null;
     setHud("on", `${S.objs.length} objects found`);
-    $("hudB").textContent = S.objs.length ? "Tap any object. Fix its type or mass in the panel if it's wrong." : "Nothing recognized. Try a wider shot with furniture in view.";
+    $("hudB").textContent = S.objs.length ? "Tap any object, or tap an unlabeled thing to identify it." : "Nothing detected. Tap on things to identify them one at a time.";
     renderAll(true); draw();
+    // name generic detections more precisely (bottle → wine bottle, cup → coffee mug)
+    if (!inFrame){
+      const todo = S.objs.filter(o => REFINABLE.has(o.detCls));
+      if (todo.length){
+        setHud("busy", "Refining names");
+        let n = 0; for (const o of todo){ if (S.photo !== c) return; if (await refineObj(o, true)) n++; }
+        setHud("on", `${S.objs.length} objects · ${n} refined`); renderAll(true); draw();
+      }
+    }
   };
   img.src = url;
 });
@@ -757,44 +984,46 @@ $("newPhoto").addEventListener("click", () => $("file").click());
 // ---------- sensors ----------
 const spark = $("spark"), sctx = spark.getContext("2d");
 function setStat(el, cls, text){ el.className = "status " + cls; el.innerHTML = `<span class="dot ${cls}"></span>${esc(text)}`; }
-async function enableSensors(){
+function enableSensors(){
   const btn = $("enableSensors"); btn.disabled = true;
-  let denied = false;
-  try { if (typeof DeviceMotionEvent !== "undefined" && DeviceMotionEvent.requestPermission){ const r = await DeviceMotionEvent.requestPermission(); if (r !== "granted") denied = true; } } catch(e){ denied = true; }
-  try { if (typeof DeviceOrientationEvent !== "undefined" && DeviceOrientationEvent.requestPermission){ await DeviceOrientationEvent.requestPermission(); } } catch(e){}
-  window.addEventListener("devicemotion", onMotion);
-  window.addEventListener("deviceorientation", onOrient);
-  setStat($("aStat"), "busy", "Listening");
-  setTimeout(() => {
-    if (S.motion.mag == null){
-      const msg = denied ? "Permission denied" : "No sensor data";
-      setStat($("aStat"), "warn", msg);
-      $("aVal").innerHTML = `—<small>m/s²</small>`;
-      $("gDiff").textContent = inFrame ? "Blocked in this preview" : (denied ? "Allow Motion & Orientation Access in Safari settings" : "This device reports no motion data");
-      btn.disabled = false; btn.textContent = "Try again";
-    } else { btn.textContent = "Sensors on"; }
-  }, 1500);
+  // iOS needs both permission requests inside the same tap, before any await.
+  const asks = [];
+  if (typeof DeviceMotionEvent !== "undefined" && DeviceMotionEvent.requestPermission) asks.push(DeviceMotionEvent.requestPermission());
+  if (typeof DeviceOrientationEvent !== "undefined" && DeviceOrientationEvent.requestPermission) asks.push(DeviceOrientationEvent.requestPermission());
+  Promise.allSettled(asks).then(rs => {
+    const denied = rs.some(r => r.status === "rejected" || r.value === "denied");
+    window.addEventListener("devicemotion", onMotion);
+    window.addEventListener("deviceorientation", onOrient);
+    setStat($("aStat"), "busy", "Listening");
+    setTimeout(() => {
+      if (S.motion.mag == null){
+        setStat($("aStat"), "warn", denied ? "Permission denied" : "No sensor data");
+        $("gDiff").textContent = inFrame ? "Blocked in this preview" : denied ? "Allow Motion & Orientation Access for this site" : "This device reports no motion data";
+        btn.disabled = false; btn.textContent = "Try again";
+      } else btn.textContent = "Sensors on";
+    }, 1500);
+  });
 }
 function onMotion(e){
   const a = e.accelerationIncludingGravity; if (!a || a.x == null) return;
   const mag = Math.hypot(a.x, a.y, a.z), M = S.motion;
-  if (M.mag == null){ setStat($("aStat"), "on", "Live"); $("capUp").disabled = false; $("capDn").disabled = false; }
-  M.mag = mag; M.ema = M.ema == null ? mag : M.ema*0.9 + mag*0.1; M.z = a.z;
+  if (M.mag == null){ setStat($("aStat"), "on", "Live"); $("capUp").disabled = false; $("capDn").disabled = false; startSensorUi(); }
+  M.mag = mag; M.ema = M.ema == null ? mag : M.ema*0.9 + mag*0.1;
   M.buf.push(mag); if (M.buf.length > 240) M.buf.shift();
   if (M.samples) M.samples.push(Math.abs(a.z));
 }
 function onOrient(e){
   if (e.beta == null) return;
   if (S.beta == null){ setStat($("tStat"), "on", "Live tilt"); $("tManWrap").hidden = true; }
-  S.beta = e.beta; renderTilt();
+  S.beta = e.beta; S.gamma = e.gamma;
+  const now = performance.now(); if (now - (S.lastTilt || 0) > 150){ S.lastTilt = now; renderTilt(); }
 }
 function capture(side){
-  const M = S.motion, btn = side === "up" ? $("capUp") : $("capDn"); btn.disabled = true; const label = btn.textContent;
-  M.samples = []; btn.textContent = "Hold still…";
+  const M = S.motion, btn = side === "up" ? $("capUp") : $("capDn"), label = btn.textContent;
+  btn.disabled = true; M.samples = []; btn.textContent = "Hold still…";
   setTimeout(() => {
     const s = M.samples; M.samples = null; btn.disabled = false; btn.textContent = label;
-    if (!s.length) return;
-    M[side] = s.reduce((a,b)=>a+b,0)/s.length; renderG();
+    if (s.length) { M[side] = s.reduce((a,b) => a+b, 0)/s.length; renderG(); }
   }, 2000);
 }
 $("enableSensors").addEventListener("click", enableSensors);
@@ -808,61 +1037,59 @@ function renderG(){
   if (M.up != null && M.dn != null){ cal = (M.up + M.dn)/2; $("gCal").textContent = cal.toFixed(4) + " m/s²"; }
   else $("gCal").textContent = M.up != null ? "Now capture face down" : M.dn != null ? "Now capture face up" : "—";
   const ref = cal ?? M.ema;
-  if (ref != null) $("gDiff").textContent = `${((ref-gp)/gp*100 >= 0 ? "+" : "")}${((ref-gp)/gp*100).toFixed(2)}% vs predicted`;
+  if (ref != null){ const pct = (ref - gp)/gp*100; $("gDiff").textContent = `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}% vs predicted`; }
 }
 function drawSpark(){
-  const W = spark.width, H = spark.height, b = S.motion.buf, c = sctx;
-  c.clearRect(0,0,W,H);
-  const gp = localG(S.lat, S.alt), lo = gp - 1.5, hi = gp + 1.5, y = v => H - (Math.min(hi,Math.max(lo,v))-lo)/(hi-lo)*H;
+  const W = spark.width, H = spark.height, b = S.motion.buf, c = sctx, gp = localG(S.lat, S.alt), lo = gp - 1.5, hi = gp + 1.5;
+  const y = v => H - (Math.min(hi, Math.max(lo, v)) - lo)/(hi - lo)*H;
+  c.clearRect(0, 0, W, H);
   c.strokeStyle = "rgba(233,236,242,.08)"; c.lineWidth = 1;
-  [lo+0.5, gp, hi-0.5].forEach(v => { c.beginPath(); c.moveTo(0,y(v)); c.lineTo(W,y(v)); c.stroke(); });
+  [lo+0.5, hi-0.5].forEach(v => { c.beginPath(); c.moveTo(0,y(v)); c.lineTo(W,y(v)); c.stroke(); });
   c.strokeStyle = "rgba(139,92,255,.6)"; c.setLineDash([6,6]); c.beginPath(); c.moveTo(0,y(gp)); c.lineTo(W,y(gp)); c.stroke(); c.setLineDash([]);
   if (b.length > 1){
     c.strokeStyle = "#00E7FF"; c.lineWidth = 2; c.beginPath();
-    b.forEach((v,i) => { const x = i/(240-1)*W; i ? c.lineTo(x,y(v)) : c.moveTo(x,y(v)); }); c.stroke();
-    const lx = (b.length-1)/(239)*W; c.fillStyle = "#B9FF38"; c.beginPath(); c.arc(lx, y(b[b.length-1]), 3.5, 0, Math.PI*2); c.fill();
-  } else {
-    c.fillStyle = "#858799"; c.font = "22px 'Geist Mono', monospace"; c.fillText("predicted g ─ ─", 12, y(gp) - 10);
-  }
+    b.forEach((v,i) => { const x = i/239*W; i ? c.lineTo(x, y(v)) : c.moveTo(x, y(v)); }); c.stroke();
+    c.fillStyle = "#B9FF38"; c.beginPath(); c.arc((b.length-1)/239*W, y(b[b.length-1]), 3.5, 0, Math.PI*2); c.fill();
+  } else { c.fillStyle = "#858799"; c.font = "22px 'Geist Mono', monospace"; c.fillText("predicted g ─ ─", 12, y(gp) - 10); }
 }
-(function tick(){ if (S.motion.mag != null){ renderG(); } drawSpark(); setTimeout(() => requestAnimationFrame(tick), 100); })();
+function startSensorUi(){ if (S.sensorTimer) return; S.sensorTimer = setInterval(() => { renderG(); drawSpark(); }, 100); }
 
-function tiltAngle(){ return S.beta != null ? Math.abs(S.beta) : parseFloat($("tMan").value); }
-function tiltDist(){ const b = tiltAngle(); if (!(b > 3 && b < 87)) return null; return S.camH * Math.tan(b*Math.PI/180); }
+function tiltAngle(){
+  if (S.beta == null) return parseFloat($("tMan").value);
+  const ang = (screen.orientation && screen.orientation.angle) ?? window.orientation ?? 0;
+  return Math.abs(Math.abs(ang) === 90 ? S.gamma : S.beta);
+}
+function tiltDist(){ const b = tiltAngle(); return b > 3 && b < 87 ? S.camH * Math.tan(b*Math.PI/180) : null; }
 function renderTilt(){
   const b = tiltAngle(), d = tiltDist();
   $("tAng").textContent = isFinite(b) ? b.toFixed(1) + "°" : "—";
   $("tDist").innerHTML = d ? `${d.toFixed(2)}<small>m</small>` : `—<small>aim lower</small>`;
-  const ex = d ? Math.min(280, 30 + d/ (S.camH*5) * 250) : 280;
+  const ex = d ? Math.min(280, 30 + d/(S.camH*5)*250) : 280;
   $("ray").setAttribute("x2", ex); $("rayEnd").setAttribute("cx", ex);
-  const o = cur(); $("tApply").textContent = o ? `Apply to ${name(o)}` : "Apply to selected"; $("tApply").disabled = !o || !d;
+  const o = cur(); $("tApply").textContent = o ? `Apply to ${o.cls}` : "Apply to selected"; $("tApply").disabled = !o || !d;
 }
 $("tH").value = S.camH;
 $("tH").addEventListener("input", e => { const v = parseFloat(e.target.value); if (v > 0.1){ S.camH = v; store.set("camH", v); renderTilt(); } });
 $("tMan").addEventListener("input", renderTilt);
 $("tApply").addEventListener("click", () => { const o = cur(), d = tiltDist(); if (!o || !d) return; o.dMode = "tilt"; o.d = +d.toFixed(2); renderAll(true); draw(); });
-setInterval(renderTilt, 300);
 
-// location for local g
 $("lat").value = S.lat; $("alt").value = S.alt;
-$("lat").addEventListener("input", e => { const v = parseFloat(e.target.value); if (v >= -90 && v <= 90){ S.lat = v; store.set("lat", v); renderG(); renderRank(); } });
-$("alt").addEventListener("input", e => { const v = parseFloat(e.target.value); if (isFinite(v)){ S.alt = v; store.set("alt", v); renderG(); renderRank(); } });
+$("lat").addEventListener("input", e => { const v = parseFloat(e.target.value); if (v >= -90 && v <= 90){ S.lat = v; store.set("lat", v); renderG(); renderSky(); drawSpark(); } });
+$("alt").addEventListener("input", e => { const v = parseFloat(e.target.value); if (isFinite(v)){ S.alt = v; store.set("alt", v); renderG(); renderSky(); drawSpark(); } });
 $("geo").addEventListener("click", () => {
   if (!navigator.geolocation){ $("geoMsg").textContent = "Location isn't available here. Type your latitude."; return; }
   $("geoMsg").textContent = "Locating…";
   navigator.geolocation.getCurrentPosition(p => {
     S.lat = +p.coords.latitude.toFixed(4); $("lat").value = S.lat; store.set("lat", S.lat);
     if (p.coords.altitude != null){ S.alt = Math.round(p.coords.altitude); $("alt").value = S.alt; store.set("alt", S.alt); }
-    $("geoMsg").textContent = "Updated."; renderG(); renderRank();
+    $("geoMsg").textContent = "Updated."; renderG(); renderSky(); drawSpark();
   }, () => { $("geoMsg").textContent = inFrame ? "Blocked in this preview. Type your latitude." : "Location was denied. Type your latitude."; }, { enableHighAccuracy:true, timeout:8000 });
 });
 
 // ---------- boot ----------
-window.addEventListener("resize", () => draw());
-setMode("demo"); renderG(); renderTilt();
+setMode("demo"); renderSky(); renderG(); drawSpark();
 document.fonts?.ready.then(() => draw());
 })();
 </script>
-
 </body>
 </html>
