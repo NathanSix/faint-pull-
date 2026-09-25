@@ -1,6 +1,6 @@
 // Faint Pull service worker: makes the app open instantly and work offline.
 // The app shell is cached per build; models are cached once and kept.
-const VERSION = "24c30bb25a";
+const VERSION = "f5e654ef9a";
 const APP = "fp-app-" + VERSION, LIB = "fp-lib-63a2520691", MODELS = "fp-models-v1", FONTS = "fp-fonts-v1";
 const CORE = ["./", "index.html", "engine.js", "manifest.webmanifest", "icons/icon-192.png", "icons/apple-touch-icon.png"];
 // The 12 MB MediaPipe runtime has its own cache, so app updates don't re-download it.

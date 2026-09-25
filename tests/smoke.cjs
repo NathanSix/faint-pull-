@@ -117,7 +117,24 @@ async function testImage(){
     const long = await page.evaluate(() => window.__long.slice());
     const worst = long.length ? Math.max(...long) : 0;
     assert(worst < 300, "main thread blocked for " + Math.round(worst) + " ms");
-    return (await hud()) + ", worst stall " + Math.round(worst) + " ms";
+    await page.waitForTimeout(6000);   // give the GPU trial time to finish
+    const st = await page.evaluate(() => window.__faintPull.Engine.call("status", {}));
+    return (await hud()) + ", worst stall " + Math.round(worst) + " ms, GPU trial: " + JSON.stringify(st);
+  });
+  await check("live picture fills the scene", async () => {
+    const r = await page.evaluate(() => {
+      const cv = document.getElementById("cv"), m = document.getElementById("media").getBoundingClientRect(), c = cv.getBoundingClientRect();
+      const d = cv.getContext("2d").getImageData(Math.floor(cv.width/2), Math.floor(cv.height/2), 1, 1).data;
+      return { sameBox: Math.abs(m.width - c.width) < 1 && Math.abs(m.height - c.height) < 1, lit: d[0] + d[1] + d[2] > 30, visible: getComputedStyle(cv).display !== "none" };
+    });
+    assert(r.visible && r.sameBox, "canvas doesn't cover the scene box");
+    assert(r.lit, "live picture isn't being drawn");
+  });
+  await check("scrolling doesn't resize the scene", async () => {
+    const before = await page.$eval("#media", e => e.style.width + "x" + e.style.height);
+    await page.mouse.wheel(0, 900); await page.waitForTimeout(300); await page.mouse.wheel(0, -900); await page.waitForTimeout(300);
+    const after = await page.$eval("#media", e => e.style.width + "x" + e.style.height);
+    assert(before === after, before + " became " + after);
   });
   await check("freeze and resume", async () => {
     await page.click("#freeze"); assert(/Frozen/.test(await hud()), await hud());

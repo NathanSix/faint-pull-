@@ -38,8 +38,46 @@ async function init(o){
   if (!vision) vision = await import(base + "lib/mediapipe/vision_bundle.mjs");
   if (!fileset) fileset = await vision.FilesetResolver.forVisionTasks(base + "lib/mediapipe/wasm", true);
   await getTask("live");
+  startGpuTrial();   // in the background; scanning starts on the CPU right away
   return { ok: true };
 }
+
+// ----- live backend: try the GPU, check it against the CPU, keep whichever is correct and faster -----
+const gpu = { state: "idle", task: null, frames: 0, counted: 0, agree: 0, cpuMs: [], gpuMs: [] };
+async function startGpuTrial(){
+  if (!cfg.models.liveGpu || typeof OffscreenCanvas === "undefined"){ gpu.state = "cpu"; return; }
+  gpu.state = "loading";
+  try {
+    const fs = Object.assign({}, fileset, { wasmLoaderPath: fileset.wasmLoaderPath + "?task=live-gpu" });
+    gpu.task = await vision.ObjectDetector.createFromOptions(fs, {
+      baseOptions: { modelAssetPath: base + "models/" + cfg.models.liveGpu, delegate: "GPU" },
+      canvas: new OffscreenCanvas(1, 1), runningMode: "VIDEO", scoreThreshold: 0.35, maxResults: 25 });
+    gpu.state = "testing";
+  } catch(e){ gpu.state = "cpu"; gpu.task = null; }
+}
+function dropGpu(){ try { gpu.task?.close(); } catch(e){} gpu.task = null; gpu.state = "cpu"; }
+const median = a => { const b = a.slice().sort((x, y) => x - y); return b[Math.floor(b.length/2)] ?? Infinity; };
+function iou(a, b){
+  const x1 = Math.max(a.originX, b.originX), y1 = Math.max(a.originY, b.originY);
+  const x2 = Math.min(a.originX + a.width, b.originX + b.width), y2 = Math.min(a.originY + a.height, b.originY + b.height);
+  const i = Math.max(0, x2 - x1) * Math.max(0, y2 - y1); return i / (a.width*a.height + b.width*b.height - i);
+}
+// Does the GPU find what the CPU finds? (some mobile GPUs return empty or wrong results)
+function agrees(cpuDets, gpuDets){
+  const strong = cpuDets.filter(d => d.categories[0].score >= 0.5);
+  if (!strong.length) return null;
+  const hit = strong.filter(d => gpuDets.some(g => g.categories[0].categoryName === d.categories[0].categoryName && iou(g.boundingBox, d.boundingBox) >= 0.4));
+  return hit.length / strong.length >= 0.7;
+}
+function runLive(c){
+  const t = ts();
+  if (gpu.state === "gpu"){
+    try { const t0 = performance.now(), r = gpu.task.detectForVideo(c, t); return { r, ms: performance.now() - t0 }; }
+    catch(e){ dropGpu(); }
+  }
+  return null;
+}
+function backendName(){ return gpu.state === "gpu" ? "GPU" : gpu.state === "testing" || gpu.state === "loading" ? "CPU, testing GPU" : "CPU"; }
 function getTask(name){
   if (!tasks[name]){
     const model = base + "models/" + cfg.models[name];
@@ -61,15 +99,33 @@ async function detect({ bitmap, boost, which, maxSide }){
   const lum = meanLuma(bitmap, w0, h0);
   drawBoosted(c.getContext("2d"), bitmap, 0, 0, w0, h0, w, h, boost || 0);
   bitmap.close?.();
-  const det = await getTask(which || "live");
-  const t0 = performance.now();
-  const r = det.detectForVideo(c, ts());
-  const ms = performance.now() - t0;
+  which = which || "live";
+  let r = null, ms = 0;
+  if (which === "live"){ const g = runLive(c); if (g){ r = g.r; ms = g.ms; } }
+  if (!r){
+    const det = await getTask(which), t0 = performance.now();
+    r = det.detectForVideo(c, ts()); ms = performance.now() - t0;
+    if (which === "live" && gpu.state === "testing"){
+      try {
+        const g0 = performance.now(), gr = gpu.task.detectForVideo(c, ts()), gms = performance.now() - g0;
+        gpu.frames++; gpu.cpuMs.push(ms); if (gpu.frames > 2) gpu.gpuMs.push(gms);   // skip shader warm-up
+        // give up early if the GPU is clearly slower, so a weak GPU never drags scanning down for long
+        if (gpu.frames > 2 && gms > Math.max(150, 2 * median(gpu.cpuMs))){ dropGpu(); throw 0; }
+        if (gpu.gpuMs.length >= 3 && median(gpu.gpuMs) > median(gpu.cpuMs)){ dropGpu(); throw 0; }
+        const ok = agrees(r.detections, gr.detections);
+        if (ok !== null){ gpu.counted++; if (ok) gpu.agree++; }
+        if (gpu.counted >= 8 || gpu.frames >= 40){
+          const correct = gpu.counted >= 4 && gpu.agree / gpu.counted >= 0.75, faster = median(gpu.gpuMs) < median(gpu.cpuMs) * 0.8;
+          if (correct && faster) gpu.state = "gpu"; else dropGpu();
+        }
+      } catch(e){ if (gpu.task) dropGpu(); }
+    }
+  }
   const out = r.detections.map(d => {
     const b = d.boundingBox, cat = d.categories[0];
     return { cls: cat.categoryName, score: cat.score, bbox: [b.originX/sc, b.originY/sc, b.width/sc, b.height/sc] };
   }).filter(d => d.cls && d.cls !== "???");
-  return { dets: out, lum, ms };
+  return { dets: out, lum, ms, backend: which === "live" ? backendName() : undefined };
 }
 
 // Classify one or more square crops of a frame. Returns the top 5 ImageNet classes for the best crop.
@@ -89,8 +145,9 @@ async function classify({ bitmap, boxes, boost, each }){
   return { cats: list[bi] || [], box: bi };
 }
 async function warm({ which }){ await getTask(which); return { ok: true }; }
+function status(){ return { backend: backendName(), frames: gpu.frames, counted: gpu.counted, agree: gpu.agree, cpuMs: median(gpu.cpuMs), gpuMs: median(gpu.gpuMs) }; }
 
-const api = { init, detect, classify, warm };
+const api = { init, detect, classify, warm, status };
 export default api;
 
 // Worker wiring

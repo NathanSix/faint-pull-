@@ -76,7 +76,7 @@ header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-be
 .stage{display:flex;justify-content:center}
 .media{position:relative;width:100%;aspect-ratio:4/3;max-width:100%}
 .media > canvas,.media > video{position:absolute;inset:0;width:100%;height:100%;display:block}
-.media > video{object-fit:cover}
+.media > video{object-fit:fill;opacity:.01}
 #ov{touch-action:manipulation;cursor:crosshair;-webkit-tap-highlight-color:transparent}
 .hud{position:absolute;left:0;right:0;display:flex;justify-content:space-between;gap:8px;padding:10px 12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);pointer-events:none;z-index:2}
 .hud.top{top:0;background:linear-gradient(rgba(7,7,12,.72),rgba(7,7,12,0))}.hud.bot{bottom:0;text-transform:none;letter-spacing:.02em;font-size:11.5px;color:var(--ghost);background:linear-gradient(rgba(7,7,12,0),rgba(7,7,12,.72));padding-top:18px}
@@ -228,8 +228,8 @@ footer{color:var(--ti);font-size:12px;max-width:760px}
     <div style="display:grid;gap:20px;min-width:0">
       <div class="stage" id="stage">
         <div class="media" id="media">
-          <canvas id="cv" width="1200" height="900"></canvas>
           <video id="vid" playsinline muted autoplay hidden></video>
+          <canvas id="cv" width="1200" height="900"></canvas>
           <canvas id="ov" aria-label="Scene with detected objects. Tap an object to select it, or tap anything unlabeled to identify it."></canvas>
         </div>
         <div class="hud top"><span id="hudL">Demo · schematic room</span><span id="hudR"><span class="dot on"></span>Ready</span></div>

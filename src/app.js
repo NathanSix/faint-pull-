@@ -1,8 +1,8 @@
 (() => {
 "use strict";
 const CONFIG = {
-  models: { live: "efficientdet_lite0_int8.tflite", photo: "efficientdet_lite2_fp16.tflite", classifier: "efficientnet_lite2_fp32.tflite" },
-  liveMaxSide: 512,     // detector input for the live camera (EfficientDet-Lite0 works at 320 px, so 512 keeps detail)
+  models: { live: "efficientdet_lite0_int8.tflite", liveGpu: "efficientdet_lite0_fp16.tflite", photo: "efficientdet_lite2_fp16.tflite", classifier: "efficientnet_lite2_fp32.tflite" },
+  liveMaxSide: 384,     // detector input for the live camera (EfficientDet-Lite0 itself works at 320 px)
   photoMaxSide: 1024,
   minDetectGap: 40      // ms between live detections, so the phone doesn't run hot
 };
@@ -234,27 +234,45 @@ function setSize(W, H){
   if (cv.width !== W) cv.width = W; if (cv.height !== H) cv.height = H;
   fitMedia();
 }
+// Height budget uses the *small* viewport height (Safari toolbars showing), so scrolling
+// and the toolbar sliding away never resize the camera view.
+const vhProbe = Object.assign(document.createElement("div"), { style: "position:fixed;top:0;left:-9px;width:1px;height:74svh;visibility:hidden;pointer-events:none" });
+document.body.appendChild(vhProbe);
+let lastFit = "";
 function fitMedia(){
-  const stage = $("stage"), maxW = stage.clientWidth || 360, maxH = Math.max(260, window.innerHeight * 0.74);
+  const stage = $("stage"), maxW = stage.clientWidth || 360, maxH = Math.max(260, vhProbe.offsetHeight || window.innerHeight * 0.74);
   const w = Math.min(maxW, maxH * S.W / S.H), h = w * S.H / S.W;
   media.style.width = Math.round(w) + "px"; media.style.height = Math.round(h) + "px"; media.style.aspectRatio = "auto";
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   ov.width = Math.round(w * dpr); ov.height = Math.round(h * dpr);
-  S.cssW = w;
+  S.cssW = w; lastFit = fitKey();
 }
-window.addEventListener("resize", () => { fitMedia(); drawOv(); });
+const fitKey = () => `${$("stage").clientWidth}|${vhProbe.offsetHeight}|${S.W}x${S.H}`;
+window.addEventListener("resize", () => { if (fitKey() !== lastFit){ fitMedia(); drawOv(); } });
 
-// Display brightness for the live view is a GPU filter on the video element, so it costs nothing per frame.
-function applyDisplayBoost(){
-  const f = S.boost > 0.01 ? `brightness(${(1 + 0.7*S.boost).toFixed(2)}) contrast(0.96)` : "none";
-  vid.style.filter = f; cv.style.filter = S.mode === "live" ? f : "none";
+// The live picture is drawn into the canvas (not shown through the <video> element, which iOS can
+// mis-size after scrolling). 'screen' blending lifts shadows without blowing out highlights.
+function drawBoosted(c, src, w, h, boost){
+  c.globalCompositeOperation = "source-over"; c.globalAlpha = 1; c.drawImage(src, 0, 0, w, h);
+  if (boost > 0.02){
+    c.globalCompositeOperation = "screen";
+    for (let b = boost; b > 0.02; b -= 1){ c.globalAlpha = Math.min(1, b); c.drawImage(src, 0, 0, w, h); }
+    c.globalCompositeOperation = "source-over"; c.globalAlpha = 1;
+  }
 }
+function drawLiveFrame(){
+  if (vid.readyState < 2) return false;
+  if (vid.videoWidth && (vid.videoWidth !== S.W || vid.videoHeight !== S.H)){ setSize(vid.videoWidth, vid.videoHeight); S.objs = []; }
+  drawBoosted(ctx, vid, S.W, S.H, S.boost); return true;
+}
+function applyDisplayBoost(){}   // kept as a hook; brightness is applied when each frame is drawn
 
 // ---------- drawing ----------
 function drawBase(){
   if (S.mode === "demo") drawDemo();
   else if (S.mode === "photo" && S.photo) ctx.drawImage(S.photo, 0, 0, S.W, S.H);
   else if (S.mode === "live" && S.frozen) {} // the frozen frame is already on the canvas
+  else if (S.mode === "live" && S.stream && drawLiveFrame()) {}
   else { ctx.fillStyle = "#07070C"; ctx.fillRect(0, 0, S.W, S.H); }
 }
 function drawOv(){
@@ -481,7 +499,7 @@ async function identifyAt(x, y){
     S.pending = boxes[1]; animatePending();
     setHud("busy", S.clfReady ? "Identifying" : "Loading identifier (24 MB, first time only)");
     const bm = await frameBitmap(); if (!bm) return;
-    const r = await Engine.call("classify", { bitmap: bm, boxes, boost: S.mode === "live" ? S.boost : 0 }, [bm]);
+    const r = await Engine.call("classify", { bitmap: bm, boxes, boost: 0 }, [bm]);   // the frozen frame is already brightened
     S.clfReady = true;
     const p = pickCats(r.cats);
     if (!p || p.score < 0.1){
@@ -503,7 +521,7 @@ async function identifyAt(x, y){
 function animatePending(){ if (!S.pending) return; drawOv(); requestAnimationFrame(animatePending); }
 async function refineObjs(objs, quiet){
   const bm = await frameBitmap(); if (!bm) return 0;
-  const r = await Engine.call("classify", { bitmap: bm, boxes: objs.map(o => o.bbox), boost: S.mode === "live" ? S.boost : 0, each: true }, [bm]);
+  const r = await Engine.call("classify", { bitmap: bm, boxes: objs.map(o => o.bbox), boost: 0, each: true }, [bm]);
   S.clfReady = true;
   let n = 0;
   r.list.forEach((cats, i) => {
@@ -560,7 +578,7 @@ function setMode(m){
   document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === m));
   ["freeze","identify","torch","newPhoto","boostWrap","evWrap","tiltBtn"].forEach(id => $(id).hidden = true);
   $("tools").hidden = m === "demo"; $("drop").hidden = true;
-  vid.hidden = true; cv.hidden = false;
+  vid.hidden = m !== "live";
   if (m === "demo"){ loadDemo(); $("hudL").textContent = "Demo · schematic room"; setHud("on","Ready"); $("hudB").textContent = "Tap any object. Cyan lines are its pull on you; brighter is stronger."; }
   if (m === "live"){ S.objs = []; S.sel = null; setSize(1280, 720); $("hudL").textContent = "Live · rear camera"; $("hudB").textContent = "Point at a room. Tap anything unlabeled to identify it."; startCam(); }
   if (m === "photo"){
@@ -592,7 +610,7 @@ async function startCam(){
   }
   if (S.mode !== "live" || id !== S.loopId){ stopCam(); return; }
   S.track = S.stream.getVideoTracks()[0];
-  vid.srcObject = S.stream; vid.hidden = false; cv.hidden = true;
+  vid.srcObject = S.stream; vid.hidden = false;
   await vid.play().catch(() => {});
   if (!vid.videoWidth) await new Promise(r => vid.addEventListener("loadedmetadata", r, { once:true }));
   setSize(vid.videoWidth, vid.videoHeight);
@@ -605,7 +623,6 @@ async function startCam(){
   try { await Engine.start(); } catch(e){ setHud("warn", "Detector failed to load"); $("hudB").textContent = "The detector couldn't load. Check your connection, then switch modes and back to retry."; return; }
   detectLoop(id);
 }
-vid.addEventListener("resize", () => { if (S.mode === "live" && vid.videoWidth && !S.frozen && (vid.videoWidth !== S.W || vid.videoHeight !== S.H)){ setSize(vid.videoWidth, vid.videoHeight); S.objs = []; } });
 function camFail(msg){ setHud("warn", "Camera unavailable"); showDrop("Live camera", msg, "Switch to Photo", () => setMode("photo")); }
 function stopCam(){
   S.loopId++; S.stream?.getTracks().forEach(t => t.stop()); S.stream = null; S.track = null; vid.srcObject = null; S.torch = false;
@@ -629,7 +646,8 @@ async function detectLoop(id){
       S.inferMs = S.inferMs ? S.inferMs*0.8 + r.ms*0.2 : r.ms;
       frames++;
       const now = performance.now();
-      if (now - t0 > 1000){ S.fps = frames * 1000 / (now - t0); frames = 0; t0 = now; setHud("on", `Scanning · ${S.fps.toFixed(0)} fps · ${Math.round(S.inferMs)} ms`); }
+      if (r.backend) S.backend = r.backend;
+      if (now - t0 > 1000){ S.fps = frames * 1000 / (now - t0); frames = 0; t0 = now; setHud("on", `Scanning · ${S.fps.toFixed(0)} fps · ${Math.round(S.inferMs)} ms · ${S.backend || "CPU"}`); }
     } catch(e){ setHud("warn", "Detector hiccup, retrying"); await sleep(800); }
     const dt = performance.now() - start; if (dt < CONFIG.minDetectGap) await sleep(CONFIG.minDetectGap - dt);
   }
@@ -637,6 +655,7 @@ async function detectLoop(id){
 function renderLoop(id){
   if (id !== S.loopId || S.mode !== "live" || !S.stream) return;
   if (!S.frozen){
+    if (vid.currentTime !== S.lastVT){ S.lastVT = vid.currentTime; drawLiveFrame(); }
     glide(); drawOv();
     const now = performance.now();
     if (now - S.lastPanel > 300){ S.lastPanel = now; renderSel(); }
@@ -648,11 +667,9 @@ function setFrozen(on){
   S.frozen = on; $("freeze").textContent = on ? "Resume" : "Freeze";
   if (on){
     S.frozenTilt = liveTilt();
-    if (vid.readyState >= 2) ctx.drawImage(vid, 0, 0, S.W, S.H);
-    cv.hidden = false; vid.hidden = true; snapDisp();
+    drawLiveFrame(); snapDisp();
     S.objs.forEach(o => o.seen = Infinity); setHud("", "Frozen · tap anything to identify it");
   } else {
-    cv.hidden = true; vid.hidden = false;
     const n = performance.now(); S.objs = S.objs.filter(o => o.src !== "id"); S.objs.forEach(o => o.seen = n); setHud("on", "Scanning");
   }
   applyDisplayBoost(); renderAll(true); drawOv();
