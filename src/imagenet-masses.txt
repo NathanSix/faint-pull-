@@ -1,0 +1,307 @@
+398 abacus 1 .3
+401 accordion 8 .45
+402 acoustic guitar 2.5 1
+407 ambulance 4000 6
+409 analog clock .8 .3
+411 apron .2 .8
+412 trash can 4 .7
+414 backpack 3 .45
+417 balloon .01 .3
+418 ballpoint pen .01 .14
+420 banjo 2.5 .95
+422 barbell 20 1.5
+423 barber chair 60 1.1
+426 barometer 1 .25
+427 barrel 20 .9
+428 wheelbarrow 15 1.4
+429 baseball .145 .075
+430 basketball .62 .24
+431 bassinet 8 .9
+434 bath towel .6 1.2
+435 bathtub 60 1.6
+436 station wagon 1700 4.8
+438 beaker .2 .12
+440 beer bottle .55 .23
+441 beer glass .4 .15
+444 tandem bicycle 20 2.4
+446 binder .6 .3
+447 binoculars .7 .15
+448 birdhouse 1 .3
+453 bookcase 40 1.8
+455 bottle cap .002 .03
+457 bow tie .02 .12
+462 broom .8 1.3
+463 bucket 1 .3
+468 taxi 1500 4.5
+470 candle .3 .15
+473 can opener .2 .2
+474 cardigan .5 .7
+477 tool kit 5 .5
+478 carton .5 .3
+481 cassette .05 .1
+482 cassette player 1 .3
+485 cd player 3 .43
+486 cello 3 1.2
+487 cell phone .18 .14
+488 chain 1 .5
+491 chainsaw 5 .8
+492 storage chest 20 .9
+493 dresser 40 1.2
+495 china cabinet 80 1.9
+499 cleaver .4 .3
+502 clog .4 .28
+503 cocktail shaker .3 .22
+504 coffee mug .35 .1
+505 coffee pot 1 .25
+507 combination lock .2 .08
+508 keyboard .8 .44
+511 convertible 1500 4.5
+512 corkscrew .1 .12
+514 cowboy boot 1.2 .35
+515 cowboy hat .2 .35
+516 cradle 10 1
+518 helmet 1.4 .3
+519 crate 3 .5
+520 crib 20 1.3
+521 slow cooker 5 .4
+522 croquet ball .45 .09
+523 crutch 1 1.2
+526 desk 35 1.4
+527 desktop computer 9 .45
+528 desk phone 1.2 .23
+530 digital clock .4 .2
+531 wristwatch .05 .05
+532 dining table 30 1.5
+533 dish towel .05 .3
+534 dishwasher 45 .85
+539 doormat 1.2 .75
+541 drum 4 .5
+542 drumstick .05 .4
+543 dumbbell 5 .35
+544 dutch oven 5 .3
+545 electric fan 3 .6
+546 electric guitar 3.6 1
+548 tv stand 60 1.8
+549 envelope .01 .24
+550 espresso maker 6 .35
+551 makeup compact .1 .08
+553 file cabinet 25 1.3
+556 fire screen 6 .8
+558 flute .4 .67
+559 folding chair 4 .85
+560 football helmet 1.8 .3
+563 fountain pen .03 .14
+564 bed 90 2.1
+567 frying pan 1.5 .45
+572 goblet .25 .2
+574 golf ball .046 .043
+575 golf cart 400 2.4
+579 grand piano 400 1.8
+584 hair clip .01 .08
+585 hair spray .3 .25
+587 hammer .6 .33
+588 laundry hamper 2 .6
+589 hair drier .6 .25
+590 tablet .3 .2
+591 handkerchief .02 .3
+592 hard drive .6 .15
+593 harmonica .1 .1
+594 harp 35 1.7
+596 hatchet .9 .4
+604 hourglass .4 .2
+605 music player .15 .11
+606 clothes iron 1.2 .28
+608 jeans .7 1
+609 jeep 1800 4.2
+610 t-shirt .2 .7
+611 jigsaw puzzle .5 .4
+613 joystick .3 .2
+618 ladle .2 .3
+619 lamp 1.5 .4
+620 laptop 1.8 .33
+621 lawn mower 30 1.4
+622 lens cap .01 .06
+626 lighter .03 .08
+627 limousine 2500 6
+629 lipstick .02 .08
+630 loafer .35 .28
+631 lotion .3 .18
+632 speaker 4 .4
+636 mail bag 1 .4
+641 maraca .2 .25
+642 marimba 60 2
+647 measuring cup .2 .12
+648 medicine cabinet 5 .6
+650 microphone .3 .18
+651 microwave 13 .5
+653 milk can 4 .5
+654 minibus 3000 6
+656 minivan 2000 5
+658 mitten .08 .25
+659 mixing bowl .6 .28
+661 model t 540 3.4
+662 modem .4 .2
+664 monitor 5 .6
+665 moped 90 1.8
+670 scooter 110 1.9
+671 mountain bike 13 1.8
+673 mouse .1 .11
+674 mousetrap .03 .1
+675 moving van 5000 7
+677 nail .005 .07
+679 necklace .02 .4
+681 laptop 1.8 .33
+687 organ 100 1.5
+692 packet .2 .2
+695 padlock .2 .08
+696 paintbrush .03 .25
+697 pajamas .4 1
+700 paper towel .4 .28
+703 bench 40 1.6
+709 pencil case .2 .22
+710 pencil sharpener .1 .08
+711 perfume .3 .12
+713 photocopier 80 1
+717 pickup truck 2200 5.5
+719 piggy bank .5 .2
+720 pill bottle .1 .1
+721 pillow .7 .6
+722 ping-pong ball .0027 .04
+725 pitcher 1.2 .25
+728 plastic bag .02 .4
+729 dish rack 1.5 .45
+731 plunger .4 .5
+732 instant camera .5 .15
+734 police van 3000 5.5
+736 pool table 300 2.5
+737 soda bottle .5 .25
+738 flowerpot 3 .4
+740 power drill 1.8 .28
+741 rug 2 1.5
+742 printer 7 .45
+745 projector 3 .35
+746 hockey puck .17 .076
+747 punching bag 35 1.2
+748 purse .7 .3
+750 quilt 2 2
+751 race car 700 4.5
+752 tennis racket .3 .68
+753 radiator 20 .8
+754 radio 2 .3
+758 fishing reel .3 .1
+759 camera .8 .15
+760 refrigerator 80 1.75
+761 remote .15 .18
+765 rocking chair 12 1
+767 eraser .02 .05
+768 rugby ball .43 .3
+769 ruler .05 .3
+770 sneaker .3 .29
+771 safe 60 .6
+773 salt shaker .1 .09
+774 sandal .25 .27
+778 scale 1.5 .3
+779 school bus 11000 11
+784 screwdriver .1 .2
+786 sewing machine 8 .45
+790 basket .5 .45
+791 shopping cart 20 1
+792 shovel 2 1.2
+794 shower curtain .8 1.8
+797 sleeping bag 1.5 .5
+799 sliding door 40 2
+804 soap dispenser .4 .2
+805 soccer ball .43 .22
+806 sock .05 .25
+809 soup bowl .35 .15
+811 space heater 3 .5
+813 spatula .1 .33
+817 sports car 1400 4.4
+818 spotlight 1 .3
+826 stopwatch .1 .07
+827 stove 60 .9
+828 strainer .2 .25
+831 couch 45 2
+836 sunglasses .03 .14
+837 sunglasses .03 .14
+838 sunscreen .2 .15
+841 sweatshirt .6 .7
+844 light switch .05 .12
+846 table lamp 2 .5
+848 tape player 1 .3
+849 teapot .8 .25
+850 teddy bear .4 .35
+851 tv 12 1
+852 tennis ball .058 .067
+855 thimble .005 .02
+857 armchair 50 1.4
+859 toaster 2 .3
+861 toilet seat 2 .45
+862 flashlight .3 .25
+864 tow truck 6000 7
+867 semi truck 15000 16
+868 tray .5 .4
+869 coat 1.5 1.1
+870 tricycle 10 1
+872 tripod 1.5 1.5
+874 trolleybus 12000 12
+876 tub 5 .6
+878 keyboard .8 .44
+879 umbrella .5 .9
+880 unicycle 5 1.3
+881 upright piano 230 1.5
+882 vacuum cleaner 5 1.1
+883 vase 1.2 .3
+889 violin .5 .6
+890 volleyball .27 .21
+891 waffle iron 3 .3
+892 wall clock 1 .35
+893 wallet .1 .11
+894 wardrobe 70 1.9
+896 washbasin 12 .6
+897 washing machine 70 .85
+898 water bottle .6 .25
+899 water jug 2 .3
+901 whiskey jug 1.5 .3
+902 whistle .02 .05
+904 window screen 2 1.2
+905 window blind 1 1.2
+907 wine bottle 1.3 .3
+909 wok 1.8 .4
+910 wooden spoon .05 .3
+917 comic book .1 .26
+921 book .5 .24
+923 plate .5 .27
+928 ice cream .15 .12
+930 baguette .25 .6
+931 bagel .1 .1
+932 pretzel .1 .12
+933 burger .25 .12
+934 hot dog .1 .17
+936 cabbage 1 .18
+937 broccoli .3 .15
+938 cauliflower .6 .16
+939 zucchini .2 .2
+943 cucumber .3 .2
+945 bell pepper .17 .1
+947 mushroom .02 .05
+948 apple .18 .08
+949 strawberry .012 .03
+950 orange .14 .08
+951 lemon .1 .07
+953 pineapple 1.5 .3
+954 banana .12 .19
+957 pomegranate .25 .09
+963 pizza .8 .35
+966 glass of wine .15 .12
+967 espresso .1 .07
+968 cup .3 .1
+981 person 70 1.7
+982 person 70 1.7
+983 person 70 1.7
+999 toilet paper .12 .11
+330 rabbit 2 .4
+331 rabbit 2 .4
+332 rabbit 2 .4
+333 hamster .1 .15
+1 goldfish .05 .1

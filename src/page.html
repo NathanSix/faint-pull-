@@ -1,0 +1,356 @@
+<title>Faint Pull</title>
+<meta name="description" content="Point your phone at everyday objects and see how hard each one pulls on you with gravity.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&family=Michroma&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --void:#07070C; --carbon:#11111A; --graphite:#1B1C28; --ti:#858799; --ghost:#E9ECF2;
+  --cyan:#00E7FF; --violet:#8B5CFF; --lime:#B9FF38; --coral:#FF416C;
+  --line:rgba(233,236,242,.07); --line2:rgba(233,236,242,.13); --dim:rgba(233,236,242,.55);
+  --grad:linear-gradient(90deg,var(--cyan),var(--violet));
+  --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --wide:"Michroma","Geist",ui-sans-serif,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--void)}
+body{
+  color:var(--ghost); font-family:var(--sans); font-size:15px; line-height:1.5;
+  padding-inline:16px; padding-block:0 48px;
+  background-color:var(--void);
+  background-image:
+    radial-gradient(1200px 500px at 50% -200px, rgba(0,231,255,.05), transparent 70%),
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:auto, 32px 32px, 32px 32px;
+  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:20px}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:1px solid var(--cyan);outline-offset:2px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ti)}
+
+/* header */
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;padding-top:22px}
+.brand{display:flex;align-items:center;gap:14px}
+.mark{width:34px;height:34px;flex:none}
+.word{font-family:var(--wide);font-size:17px;letter-spacing:.24em;line-height:1}
+.word small{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;color:var(--ti);margin-top:8px}
+.const{font-family:var(--mono);font-size:11.5px;color:var(--ti);text-align:right}
+.const b{color:var(--ghost);font-weight:500}
+
+/* mode control */
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.seg{display:inline-flex;background:var(--carbon);border:1px solid var(--line2);border-radius:3px;padding:3px}
+.seg button{background:none;border:0;padding:8px 16px;font-size:13px;letter-spacing:.04em;color:var(--ti);cursor:pointer;border-radius:2px;position:relative}
+.seg button[aria-pressed="true"]{color:var(--ghost);background:var(--graphite)}
+.seg button[aria-pressed="true"]::after{content:"";position:absolute;left:12px;right:12px;bottom:3px;height:1px;background:var(--cyan)}
+.note{font-size:12.5px;color:var(--ti);max-width:560px}
+.note b{color:var(--ghost);font-weight:500}
+
+/* layout */
+.main{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:900px){.main{grid-template-columns:minmax(0,1fr)}}
+.panel{background:rgba(17,17,26,.92);border:1px solid var(--line2);border-radius:4px;padding:20px}
+.panel h2{font-size:13px;font-weight:500;letter-spacing:.02em;margin:0;color:var(--ghost)}
+.phead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:14px}
+
+/* stage */
+.stage{position:relative;background:#000;border:1px solid var(--line2);border-radius:4px;overflow:hidden}
+.stage::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--grad);z-index:3;opacity:.9}
+.stage{display:flex;justify-content:center}
+.media{position:relative;width:100%;aspect-ratio:4/3;max-width:100%}
+.media > canvas,.media > video{position:absolute;inset:0;width:100%;height:100%;display:block}
+.media > video{object-fit:cover}
+#ov{touch-action:manipulation;cursor:crosshair;-webkit-tap-highlight-color:transparent}
+.hud{position:absolute;left:0;right:0;display:flex;justify-content:space-between;gap:8px;padding:10px 12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);pointer-events:none;z-index:2}
+.hud.top{top:0;background:linear-gradient(rgba(7,7,12,.72),rgba(7,7,12,0))}.hud.bot{bottom:0;text-transform:none;letter-spacing:.02em;font-size:11.5px;color:var(--ghost);background:linear-gradient(rgba(7,7,12,0),rgba(7,7,12,.72));padding-top:18px}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ti);margin-right:6px;vertical-align:1px}
+.dot.on{background:var(--lime)} .dot.warn{background:var(--coral)} .dot.busy{background:var(--cyan);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tool{background:var(--carbon);border:1px solid var(--line2);color:var(--ghost);font-size:13px;padding:8px 14px;border-radius:3px;cursor:pointer}
+.tool:hover{border-color:var(--ti)}
+.tool[aria-pressed="true"]{border-color:var(--lime);color:var(--lime)}
+.tool.primary{border-color:rgba(0,231,255,.5);color:var(--cyan)}
+.tool:disabled{opacity:.4;cursor:default}
+.light{display:flex;align-items:center;gap:8px;flex:1 1 220px;min-width:0;background:var(--carbon);border:1px solid var(--line2);border-radius:3px;padding:2px 10px}
+.light > label:first-child{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ti)}
+.light input[type=range]{flex:1;min-width:60px}
+.light .auto{font-size:12px;color:var(--ti);display:flex;gap:4px;align-items:center;white-space:nowrap}
+.light .auto input{accent-color:var(--lime)}
+.pending{position:absolute;pointer-events:none;border:1px dashed var(--cyan);z-index:2}
+.chipbtn{background:rgba(7,7,12,.78);border:1px solid var(--line2);color:var(--ghost);font-size:12px;padding:7px 12px;border-radius:3px;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.chipbtn:hover{border-color:var(--ti)}
+.drop{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;z-index:2;background:rgba(7,7,12,.6)}
+.drop p{margin:6px 0 16px;color:var(--ti);font-size:13px;max-width:320px}
+.cta{display:inline-block;background:transparent;border:1px solid var(--lime);color:var(--lime);padding:10px 18px;border-radius:3px;font-size:13px;letter-spacing:.04em;cursor:pointer}
+.cta:hover{background:rgba(185,255,56,.08)}
+.cta.ghost{border-color:var(--line2);color:var(--ghost)}
+.cta:disabled{opacity:.4;cursor:default}
+
+/* selected */
+.sel-name{font-size:26px;font-weight:500;letter-spacing:-.01em;margin:2px 0 0;text-wrap:balance;text-transform:capitalize}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:3px 7px;border:1px solid var(--line2);border-radius:2px;color:var(--ti)}
+.alts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}
+.alts span{font-size:12px;color:var(--ti)}
+.alts button{background:var(--void);border:1px solid rgba(139,92,255,.45);color:var(--ghost);font-size:12px;padding:4px 9px;border-radius:2px;cursor:pointer;text-transform:capitalize}
+.alts button:hover{border-color:var(--violet)}
+.chip.tilt{color:var(--lime);border-color:rgba(185,255,56,.4)}
+.chip.manual{color:var(--violet);border-color:rgba(139,92,255,.45)}
+.force{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.force .big{font-family:var(--mono);font-size:34px;font-weight:500;color:var(--cyan);letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.force .big small{font-size:16px;color:var(--ti);margin-left:6px}
+.force .cmp{color:var(--ghost);margin-top:6px;font-size:14px}
+.force .cmp2{color:var(--ti);font-size:12.5px}
+.scale{position:relative;height:58px;margin:16px 0 4px}
+.scale .track{position:absolute;left:0;right:0;top:28px;height:2px;background:var(--graphite)}
+.scale .fill{position:absolute;left:0;top:28px;height:2px;background:var(--grad)}
+.scale .pin{position:absolute;top:21px;width:2px;height:16px;background:var(--lime);transform:translateX(-1px)}
+.scale .tick{position:absolute;top:25px;width:1px;height:8px;background:var(--ti)}
+.scale .tl{position:absolute;font-family:var(--mono);font-size:9.5px;color:var(--ti);transform:translateX(-50%);white-space:nowrap}
+.scale .tl.up{top:4px}.scale .tl.dn{top:40px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.field{display:grid;gap:5px;min-width:0}
+.field.full{grid-column:1/-1}
+.field label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ti);font-family:var(--mono)}
+.inp{width:100%;background:var(--void);border:1px solid var(--line2);border-radius:3px;padding:9px 10px;font-family:var(--mono);font-size:14px;min-width:0}
+#fType{font-family:var(--sans)}
+.inp:focus{border-color:var(--cyan);outline:none}
+.row{display:flex;gap:8px;align-items:center}
+.row .inp{flex:1}
+input[type=range]{width:100%;accent-color:var(--cyan);height:24px}
+.link{background:none;border:0;padding:0;color:var(--ti);font-size:12px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.link:hover{color:var(--ghost)}
+details.math{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+details.math summary{cursor:pointer;font-size:13px;color:var(--ti)}
+details.math pre{font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;color:var(--ghost);margin:10px 0 0;line-height:1.7}
+.nb{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+.nb ul{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.nb li{display:flex;justify-content:space-between;gap:10px;font-size:13px}
+.nb li span:last-child{font-family:var(--mono);color:var(--violet);font-size:12.5px}
+.empty{color:var(--ti);font-size:14px;padding:24px 0}
+
+/* ranking */
+.rank{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.rank li button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;width:100%;padding:9px 10px;border-radius:3px;cursor:pointer;border:1px solid transparent}
+.rank li button:hover{background:var(--graphite)}
+.rank li button[aria-current="true"]{border-color:rgba(185,255,56,.35);background:rgba(185,255,56,.04)}
+.rank .skyrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:9px 10px}
+.rank .nm{font-size:14px;text-transform:capitalize;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank .fv{font-family:var(--mono);font-size:12.5px;color:var(--ghost);text-align:right}
+.rank .meta{font-family:var(--mono);font-size:11px;color:var(--ti)}
+.rank .bar{grid-column:1/-1;height:2px;background:var(--graphite);position:relative}
+.rank .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--cyan)}
+.rank.sky .bar i{background:var(--violet)}
+.subh{margin:18px 0 8px;display:flex;justify-content:space-between;align-items:baseline}
+.you{display:flex;align-items:center;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.you label{font-size:12px;color:var(--ti);flex:1}
+.you .inp{width:96px;flex:none}
+
+/* instruments */
+.sec-title{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;margin-top:12px}
+.sec-title h2{font-family:var(--wide);font-size:13px;letter-spacing:.2em;font-weight:400;margin:0}
+.sec-title p{margin:0;color:var(--ti);font-size:13px}
+.inst{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+@media (max-width:980px){.inst{grid-template-columns:minmax(0,1fr)}}
+.readout{font-family:var(--mono);font-size:30px;font-weight:500;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.readout small{font-size:13px;color:var(--ti);margin-left:4px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px;margin-top:12px}
+.kv dt{color:var(--ti)} .kv dd{margin:0;text-align:right;font-family:var(--mono);font-size:12.5px}
+.status{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--ti);display:flex;align-items:center}
+.status.warn{color:var(--coral)} .status.on{color:var(--lime)}
+.spark{width:100%;height:56px;display:block;margin-top:12px;background:var(--void);border:1px solid var(--line);border-radius:2px}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.small{font-size:12.5px;color:var(--ti);margin:10px 0 0}
+.diag{width:100%;height:auto;display:block;margin-top:8px}
+
+/* principles */
+.laws{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line2);border:1px solid var(--line2);border-radius:4px;overflow:hidden}
+@media (max-width:900px){.laws{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.laws{grid-template-columns:minmax(0,1fr)}}
+.laws.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:520px){.laws.two{grid-template-columns:minmax(0,1fr)}}
+.law{background:var(--carbon);padding:18px}
+.law .f{font-family:var(--mono);color:var(--cyan);font-size:15px}
+.law h3{font-size:14px;font-weight:500;margin:10px 0 4px}
+.law p{margin:0;color:var(--ti);font-size:13px}
+footer{color:var(--ti);font-size:12px;max-width:760px}
+@media (max-width:520px){.fields{grid-template-columns:1fr}.force .big{font-size:28px}.word{font-size:15px}}
+@media (prefers-reduced-motion:reduce){.dot.busy{animation:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 34 34" aria-hidden="true">
+        <defs><linearGradient id="mg" x1="0" x2="1"><stop offset="0" stop-color="#00E7FF"/><stop offset="1" stop-color="#8B5CFF"/></linearGradient></defs>
+        <circle cx="17" cy="17" r="15.5" fill="none" stroke="#1B1C28"/>
+        <circle cx="17" cy="17" r="10" fill="none" stroke="#1B1C28"/>
+        <circle cx="17" cy="17" r="3.2" fill="url(#mg)"/>
+        <circle cx="29" cy="11" r="1.6" fill="#E9ECF2"/>
+        <line x1="17" y1="17" x2="29" y2="11" stroke="url(#mg)" stroke-width="1"/>
+      </svg>
+      <div class="word">FAINT PULL<small>GRAVITY SCANNER · IPHONE SE</small></div>
+    </div>
+    <div class="const">G = <b>6.674 × 10⁻¹¹</b> N·m²/kg²<br>F = G·m₁·m₂ / r²</div>
+  </header>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Source">
+      <button id="m-demo" aria-pressed="true" data-mode="demo">Demo room</button>
+      <button id="m-live" aria-pressed="false" data-mode="live">Live camera</button>
+      <button id="m-photo" aria-pressed="false" data-mode="photo">Photo</button>
+    </div>
+    <p class="note" id="frameNote" hidden>This preview blocks the live camera, motion sensors and the detailed identifier. <b>Photo</b> works here and can open your camera. The GitHub version has everything.</p>
+  </div>
+
+  <div class="main">
+    <div style="display:grid;gap:20px;min-width:0">
+      <div class="stage" id="stage">
+        <div class="media" id="media">
+          <canvas id="cv" width="1200" height="900"></canvas>
+          <video id="vid" playsinline muted autoplay hidden></video>
+          <canvas id="ov" aria-label="Scene with detected objects. Tap an object to select it, or tap anything unlabeled to identify it."></canvas>
+        </div>
+        <div class="hud top"><span id="hudL">Demo · schematic room</span><span id="hudR"><span class="dot on"></span>Ready</span></div>
+        <div class="hud bot"><span id="hudB">Tap any object. Cyan lines are its pull on you; brighter is stronger.</span></div>
+        <div class="drop" id="drop" hidden></div>
+      </div>
+      <div class="tools" id="tools" hidden>
+        <button class="tool" id="freeze" hidden>Freeze</button>
+        <button class="tool primary" id="identify" hidden>Identify center</button>
+        <button class="tool" id="torch" hidden aria-pressed="false">Torch</button>
+        <button class="tool" id="newPhoto" hidden>New photo</button>
+        <div class="light" id="boostWrap" hidden><label for="boost">Brightness</label><input type="range" id="boost" min="0" max="200" value="0"><label class="auto"><input type="checkbox" id="autoBoost" checked> Auto</label></div>
+        <div class="light" id="evWrap" hidden><label for="ev">Exposure</label><input type="range" id="ev" step="any"></div>
+      </div>
+      <input type="file" id="file" accept="image/*" hidden>
+    </div>
+
+    <aside class="panel" id="selPanel" aria-live="polite">
+      <div id="selEmpty" class="empty" hidden>Tap an object in the scene to see how hard it pulls on you.</div>
+      <div id="selBody">
+        <div class="eyebrow">Selected</div>
+        <h1 class="sel-name" id="sName">—</h1>
+        <div class="chips" id="sChips"></div>
+        <div class="alts" id="sAlts" hidden></div>
+        <div class="force">
+          <div class="eyebrow">Pulls on you with</div>
+          <div class="big" id="sForce">—</div>
+          <div class="cmp" id="sCmp"></div>
+          <div class="cmp2" id="sCmp2"></div>
+          <div class="scale" id="sScale" aria-hidden="true"></div>
+        </div>
+        <div class="fields">
+          <div class="field full">
+            <label for="fType">Object type</label>
+            <div class="row"><input class="inp" id="fType" list="catalog" autocomplete="off" spellcheck="false"><button class="tool" id="refine" title="Run the detailed identifier on this object">Identify</button></div>
+            <datalist id="catalog"></datalist>
+          </div>
+          <div class="field">
+            <label for="fMass">Mass (kg)</label>
+            <input class="inp" id="fMass" type="number" inputmode="decimal" min="0.001" step="any">
+          </div>
+          <div class="field">
+            <label for="fDist">Distance (m)</label>
+            <input class="inp" id="fDist" type="number" inputmode="decimal" min="0.05" step="any">
+          </div>
+          <div class="field full">
+            <input type="range" id="fDistR" min="0" max="1000" aria-label="Distance slider">
+            <div class="row" style="justify-content:space-between"><span class="small" id="fSrc" style="margin:0"></span><button class="link" id="fReset">Reset to estimate</button></div>
+          </div>
+        </div>
+        <details class="math" id="mathBox"><summary>Show the math</summary><pre id="sMath"></pre></details>
+        <div class="nb"><div class="eyebrow">It also pulls on nearby objects</div><ul id="sNb"></ul></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="main">
+    <section class="panel">
+      <div class="phead"><h2>Who pulls on you hardest</h2><span class="eyebrow" id="rCount">0 tracked</span></div>
+      <ul class="rank" id="rank"></ul>
+      <p class="small" id="rankEmpty" style="padding:0 10px">No objects yet.</p>
+      <div class="subh"><span class="eyebrow">Beyond the room · today</span></div>
+      <ul class="rank sky" id="skyRank"></ul>
+      <p class="small" id="earthCmp"></p>
+      <div class="you"><label for="youMass">Your mass (kg)</label><input class="inp" id="youMass" type="number" inputmode="decimal" min="1" step="any" value="70"></div>
+    </section>
+    <section class="panel">
+      <div class="phead"><h2>Why the numbers are so small</h2></div>
+      <div class="laws two">
+        <div class="law"><div class="f">m₁ ↔ m₂</div><h3>Everything pulls</h3><p>Your mug pulls on you, and you pull back on it with exactly the same force.</p></div>
+        <div class="law"><div class="f">F ∝ m</div><h3>More mass, more pull</h3><p>A 7 kg bowling ball pulls 20 times harder than a 350 g mug at the same distance.</p></div>
+        <div class="law"><div class="f">F ∝ 1/r²</div><h3>Distance cuts it fast</h3><p>Twice as far means a quarter of the pull. Ten times as far, one hundredth.</p></div>
+        <div class="law"><div class="f">G ≈ 10⁻¹⁰</div><h3>Why you never feel it</h3><p>Room objects pull with billionths of a newton. Earth pulls with hundreds.</p></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="sec-title"><h2>PHONE INSTRUMENTS</h2><p>Sensors in your iPhone SE that the scanner now uses.</p></div>
+  <div class="inst">
+    <section class="panel">
+      <div class="phead"><h2>Accelerometer · measured g</h2><span class="status" id="aStat"><span class="dot"></span>Off</span></div>
+      <div class="readout" id="aVal">—<small>m/s²</small></div>
+      <canvas class="spark" id="spark" width="600" height="112" aria-label="Live acceleration trace"></canvas>
+      <dl class="kv">
+        <dt>Predicted here</dt><dd id="gPred">—</dd>
+        <dt>Two-side calibrated</dt><dd id="gCal">—</dd>
+        <dt>Difference</dt><dd id="gDiff">—</dd>
+      </dl>
+      <div class="btnrow">
+        <button class="cta" id="enableSensors">Enable motion sensors</button>
+        <button class="cta ghost" id="capUp" disabled>Capture face up</button>
+        <button class="cta ghost" id="capDn" disabled>Capture face down</button>
+      </div>
+      <p class="small">This is the one number here that is measured, not estimated. The chip has a small offset of 1 to 2%. Lay the phone flat and still, capture face up, then face down. Averaging the two cancels most of the offset.</p>
+      <div class="fields" style="margin-top:12px">
+        <div class="field"><label for="lat">Latitude (°)</label><input class="inp" id="lat" type="number" inputmode="decimal" step="any" value="40.71"></div>
+        <div class="field"><label for="alt">Altitude (m)</label><input class="inp" id="alt" type="number" inputmode="decimal" step="any" value="10"></div>
+      </div>
+      <div class="btnrow"><button class="link" id="geo">Use my location</button><span class="small" id="geoMsg" style="margin:0"></span></div>
+    </section>
+
+    <section class="panel">
+      <div class="phead"><h2>Tilt rangefinder</h2><span class="status" id="tStat"><span class="dot"></span>Manual angle</span></div>
+      <div class="readout" id="tDist">—<small>m</small></div>
+      <svg class="diag" viewBox="0 0 300 110" role="img" aria-label="Diagram: phone at height h looks down at angle theta to the object's base at distance d">
+        <line x1="20" y1="96" x2="290" y2="96" stroke="#858799" stroke-width="1"/>
+        <line x1="30" y1="96" x2="30" y2="20" stroke="#858799" stroke-dasharray="3 3"/>
+        <rect x="24" y="12" width="12" height="18" rx="2" fill="none" stroke="#E9ECF2"/>
+        <line id="ray" x1="30" y1="20" x2="250" y2="96" stroke="#00E7FF" stroke-width="1.5"/>
+        <circle id="rayEnd" cx="250" cy="96" r="4" fill="#B9FF38"/>
+        <text x="40" y="62" fill="#858799" font-family="Geist Mono, monospace" font-size="11">h</text>
+        <text x="140" y="108" fill="#858799" font-family="Geist Mono, monospace" font-size="11">d = h · tan(β)</text>
+        <path d="M30 40 A20 20 0 0 1 48 26" fill="none" stroke="#8B5CFF"/>
+        <text x="52" y="36" fill="#8B5CFF" font-family="Geist Mono, monospace" font-size="11">β</text>
+      </svg>
+      <dl class="kv">
+        <dt>Phone tilt β</dt><dd id="tAng">—</dd>
+      </dl>
+      <div class="fields" style="margin-top:10px">
+        <div class="field"><label for="tH">Camera height (m)</label><input class="inp" id="tH" type="number" inputmode="decimal" step="any" value="1.40"></div>
+        <div class="field" id="tManWrap"><label for="tMan">Manual angle (°)</label><input class="inp" id="tMan" type="number" inputmode="decimal" min="5" max="85" step="any" value="62"></div>
+      </div>
+      <div class="btnrow"><button class="cta" id="tApply">Apply to selected</button></div>
+      <p class="small">Hold the phone at chest height, aim the center crosshair at the spot where the object touches the floor, then tap Apply. This uses real geometry instead of guessing from how big the object looks.</p>
+    </section>
+
+    <section class="panel">
+      <div class="phead"><h2>Sky · Sun and Moon</h2><span class="eyebrow" id="skyDate"></span></div>
+      <div class="readout" id="sunF">—<small>N</small></div>
+      <dl class="kv" id="skyKv"></dl>
+      <p class="small">The Sun pulls on you hundreds of millions of times harder than anything in the room. You still never feel it, because you and Earth fall around the Sun together. What you can feel from the Moon and Sun is the tiny difference across Earth's width: the tides.</p>
+    </section>
+  </div>
+
+  <footer>Masses are typical values for each kind of object. Distance comes from how big the object looks unless you set it with the rangefinder or by hand. Treat the numbers as good estimates. Detection runs on your phone with MediaPipe: EfficientDet finds 80 common kinds of objects as you scan, and EfficientNet identifies 1,000 more when you tap. Photos and camera frames never leave the phone.</footer>
+</div>
+

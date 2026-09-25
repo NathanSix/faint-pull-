@@ -16,11 +16,8 @@ jobs:
           set -e
           mkdir -p models
           B=https://storage.googleapis.com/mediapipe-models
-          curl -fsSL -o models/efficientdet_lite0_fp16.tflite $B/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite
           curl -fsSL -o models/efficientdet_lite0_int8.tflite $B/object_detector/efficientdet_lite0/int8/1/efficientdet_lite0.tflite
           curl -fsSL -o models/efficientdet_lite2_fp16.tflite $B/object_detector/efficientdet_lite2/float16/1/efficientdet_lite2.tflite
-          curl -fsSL -o models/efficientnet_lite0_fp32.tflite $B/image_classifier/efficientnet_lite0/float32/1/efficientnet_lite0.tflite
-          curl -fsSL -o models/efficientnet_lite0_int8.tflite $B/image_classifier/efficientnet_lite0/int8/1/efficientnet_lite0.tflite
           curl -fsSL -o models/efficientnet_lite2_fp32.tflite $B/image_classifier/efficientnet_lite2/float32/1/efficientnet_lite2.tflite
           ls -la models
       - name: Commit
