@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Faint Pull</title>
+<meta name="description" content="Point your phone at everyday objects and see how hard each one pulls on you with gravity.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&family=Michroma&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --void:#07070C; --carbon:#11111A; --graphite:#1B1C28; --ti:#858799; --ghost:#E9ECF2;
+  --cyan:#00E7FF; --violet:#8B5CFF; --lime:#B9FF38; --coral:#FF416C;
+  --line:rgba(233,236,242,.07); --line2:rgba(233,236,242,.13); --dim:rgba(233,236,242,.55);
+  --grad:linear-gradient(90deg,var(--cyan),var(--violet));
+  --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --wide:"Michroma","Geist",ui-sans-serif,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{background:var(--void)}
+body{
+  color:var(--ghost); font-family:var(--sans); font-size:15px; line-height:1.5;
+  padding-inline:16px; padding-block:0 48px;
+  background-color:var(--void);
+  background-image:
+    radial-gradient(1200px 500px at 50% -200px, rgba(0,231,255,.05), transparent 70%),
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:auto, 32px 32px, 32px 32px;
+  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:20px}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:1px solid var(--cyan);outline-offset:2px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ti)}
+
+/* header */
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;padding-top:22px}
+.brand{display:flex;align-items:center;gap:14px}
+.mark{width:34px;height:34px;flex:none}
+.word{font-family:var(--wide);font-size:17px;letter-spacing:.24em;line-height:1}
+.word small{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;color:var(--ti);margin-top:8px}
+.const{font-family:var(--mono);font-size:11.5px;color:var(--ti);text-align:right}
+.const b{color:var(--ghost);font-weight:500}
+
+/* mode control */
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.seg{display:inline-flex;background:var(--carbon);border:1px solid var(--line2);border-radius:3px;padding:3px}
+.seg button{background:none;border:0;padding:8px 16px;font-size:13px;letter-spacing:.04em;color:var(--ti);cursor:pointer;border-radius:2px;position:relative}
+.seg button[aria-pressed="true"]{color:var(--ghost);background:var(--graphite)}
+.seg button[aria-pressed="true"]::after{content:"";position:absolute;left:12px;right:12px;bottom:3px;height:1px;background:var(--cyan)}
+.note{font-size:12.5px;color:var(--ti);max-width:560px}
+.note b{color:var(--ghost);font-weight:500}
+
+/* layout */
+.main{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:900px){.main{grid-template-columns:minmax(0,1fr)}}
+.panel{background:rgba(17,17,26,.92);border:1px solid var(--line2);border-radius:4px;padding:20px}
+.panel h2{font-size:13px;font-weight:500;letter-spacing:.02em;margin:0;color:var(--ghost)}
+.phead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:14px}
+
+/* stage */
+.stage{position:relative;background:#000;border:1px solid var(--line2);border-radius:4px;overflow:hidden}
+.stage::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--grad);z-index:3;opacity:.9}
+.stage canvas{display:block;width:100%;height:auto;max-height:72vh;object-fit:contain;touch-action:manipulation;cursor:crosshair}
+.hud{position:absolute;left:0;right:0;display:flex;justify-content:space-between;gap:8px;padding:10px 12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);pointer-events:none;z-index:2}
+.hud.top{top:0}.hud.bot{bottom:0;text-transform:none;letter-spacing:.02em;font-size:11.5px}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ti);margin-right:6px;vertical-align:1px}
+.dot.on{background:var(--lime)} .dot.warn{background:var(--coral)} .dot.busy{background:var(--cyan);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.stage-actions{position:absolute;right:10px;bottom:34px;display:flex;gap:8px;z-index:2}
+.chipbtn{background:rgba(7,7,12,.78);border:1px solid var(--line2);color:var(--ghost);font-size:12px;padding:7px 12px;border-radius:3px;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.chipbtn:hover{border-color:var(--ti)}
+.drop{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;z-index:2;background:rgba(7,7,12,.6)}
+.drop p{margin:6px 0 16px;color:var(--ti);font-size:13px;max-width:320px}
+.cta{display:inline-block;background:transparent;border:1px solid var(--lime);color:var(--lime);padding:10px 18px;border-radius:3px;font-size:13px;letter-spacing:.04em;cursor:pointer}
+.cta:hover{background:rgba(185,255,56,.08)}
+.cta.ghost{border-color:var(--line2);color:var(--ghost)}
+.cta:disabled{opacity:.4;cursor:default}
+
+/* selected */
+.sel-name{font-size:26px;font-weight:500;letter-spacing:-.01em;margin:2px 0 0;text-wrap:balance;text-transform:capitalize}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:3px 7px;border:1px solid var(--line2);border-radius:2px;color:var(--ti)}
+.chip.tilt{color:var(--lime);border-color:rgba(185,255,56,.4)}
+.chip.manual{color:var(--violet);border-color:rgba(139,92,255,.45)}
+.force{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.force .big{font-family:var(--mono);font-size:34px;font-weight:500;color:var(--cyan);letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.force .big small{font-size:16px;color:var(--ti);margin-left:6px}
+.force .cmp{color:var(--ghost);margin-top:6px;font-size:14px}
+.force .cmp2{color:var(--ti);font-size:12.5px}
+.scale{position:relative;height:58px;margin:16px 0 4px}
+.scale .track{position:absolute;left:0;right:0;top:28px;height:2px;background:var(--graphite)}
+.scale .fill{position:absolute;left:0;top:28px;height:2px;background:var(--grad)}
+.scale .pin{position:absolute;top:21px;width:2px;height:16px;background:var(--lime);transform:translateX(-1px)}
+.scale .tick{position:absolute;top:25px;width:1px;height:8px;background:var(--ti)}
+.scale .tl{position:absolute;font-family:var(--mono);font-size:9.5px;color:var(--ti);transform:translateX(-50%);white-space:nowrap}
+.scale .tl.up{top:4px}.scale .tl.dn{top:40px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.field{display:grid;gap:5px;min-width:0}
+.field.full{grid-column:1/-1}
+.field label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ti);font-family:var(--mono)}
+.inp{width:100%;background:var(--void);border:1px solid var(--line2);border-radius:3px;padding:9px 10px;font-family:var(--mono);font-size:14px;min-width:0}
+select.inp{font-family:var(--sans)}
+.inp:focus{border-color:var(--cyan);outline:none}
+.row{display:flex;gap:8px;align-items:center}
+.row .inp{flex:1}
+input[type=range]{width:100%;accent-color:var(--cyan);height:24px}
+.link{background:none;border:0;padding:0;color:var(--ti);font-size:12px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.link:hover{color:var(--ghost)}
+details.math{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+details.math summary{cursor:pointer;font-size:13px;color:var(--ti)}
+details.math pre{font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;color:var(--ghost);margin:10px 0 0;line-height:1.7}
+.nb{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+.nb ul{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.nb li{display:flex;justify-content:space-between;gap:10px;font-size:13px}
+.nb li span:last-child{font-family:var(--mono);color:var(--violet);font-size:12.5px}
+.empty{color:var(--ti);font-size:14px;padding:24px 0}
+
+/* ranking */
+.rank{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.rank li button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;width:100%;padding:9px 10px;border-radius:3px;cursor:pointer;border:1px solid transparent}
+.rank li button:hover{background:var(--graphite)}
+.rank li button[aria-current="true"]{border-color:rgba(185,255,56,.35);background:rgba(185,255,56,.04)}
+.rank .nm{font-size:14px;text-transform:capitalize;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank .fv{font-family:var(--mono);font-size:12.5px;color:var(--ghost);text-align:right}
+.rank .meta{font-family:var(--mono);font-size:11px;color:var(--ti)}
+.rank .bar{grid-column:1/-1;height:2px;background:var(--graphite);position:relative}
+.rank .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--cyan)}
+.rank.sky .bar i{background:var(--violet)}
+.subh{margin:18px 0 8px;display:flex;justify-content:space-between;align-items:baseline}
+.you{display:flex;align-items:center;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.you label{font-size:12px;color:var(--ti);flex:1}
+.you .inp{width:96px;flex:none}
+
+/* instruments */
+.sec-title{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;margin-top:12px}
+.sec-title h2{font-family:var(--wide);font-size:13px;letter-spacing:.2em;font-weight:400;margin:0}
+.sec-title p{margin:0;color:var(--ti);font-size:13px}
+.inst{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+@media (max-width:980px){.inst{grid-template-columns:minmax(0,1fr)}}
+.readout{font-family:var(--mono);font-size:30px;font-weight:500;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}
+.readout small{font-size:13px;color:var(--ti);margin-left:4px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px;margin-top:12px}
+.kv dt{color:var(--ti)} .kv dd{margin:0;text-align:right;font-family:var(--mono);font-size:12.5px}
+.status{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--ti);display:flex;align-items:center}
+.status.warn{color:var(--coral)} .status.on{color:var(--lime)}
+.spark{width:100%;height:56px;display:block;margin-top:12px;background:var(--void);border:1px solid var(--line);border-radius:2px}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.small{font-size:12.5px;color:var(--ti);margin:10px 0 0}
+.diag{width:100%;height:auto;display:block;margin-top:8px}
+
+/* principles */
+.laws{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line2);border:1px solid var(--line2);border-radius:4px;overflow:hidden}
+@media (max-width:900px){.laws{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.laws{grid-template-columns:minmax(0,1fr)}}
+.laws.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:520px){.laws.two{grid-template-columns:minmax(0,1fr)}}
+.law{background:var(--carbon);padding:18px}
+.law .f{font-family:var(--mono);color:var(--cyan);font-size:15px}
+.law h3{font-size:14px;font-weight:500;margin:10px 0 4px}
+.law p{margin:0;color:var(--ti);font-size:13px}
+footer{color:var(--ti);font-size:12px;max-width:760px}
+@media (max-width:520px){.fields{grid-template-columns:1fr}.force .big{font-size:28px}.word{font-size:15px}}
+@media (prefers-reduced-motion:reduce){.dot.busy{animation:none}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 34 34" aria-hidden="true">
+        <defs><linearGradient id="mg" x1="0" x2="1"><stop offset="0" stop-color="#00E7FF"/><stop offset="1" stop-color="#8B5CFF"/></linearGradient></defs>
+        <circle cx="17" cy="17" r="15.5" fill="none" stroke="#1B1C28"/>
+        <circle cx="17" cy="17" r="10" fill="none" stroke="#1B1C28"/>
+        <circle cx="17" cy="17" r="3.2" fill="url(#mg)"/>
+        <circle cx="29" cy="11" r="1.6" fill="#E9ECF2"/>
+        <line x1="17" y1="17" x2="29" y2="11" stroke="url(#mg)" stroke-width="1"/>
+      </svg>
+      <div class="word">FAINT PULL<small>GRAVITY SCANNER · IPHONE SE</small></div>
+    </div>
+    <div class="const">G = <b>6.674 × 10⁻¹¹</b> N·m²/kg²<br>F = G·m₁·m₂ / r²</div>
+  </header>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="Source">
+      <button id="m-demo" aria-pressed="true" data-mode="demo">Demo room</button>
+      <button id="m-live" aria-pressed="false" data-mode="live">Live camera</button>
+      <button id="m-photo" aria-pressed="false" data-mode="photo">Photo</button>
+    </div>
+    <p class="note" id="frameNote" hidden>This preview blocks the live camera and motion sensors. <b>Photo</b> works here and can open your camera. Open the standalone file in Safari for live mode and sensors.</p>
+  </div>
+
+  <div class="main">
+    <div style="display:grid;gap:20px;min-width:0">
+      <div class="stage" id="stage">
+        <canvas id="cv" width="1200" height="900" aria-label="Scene with detected objects. Tap an object to select it."></canvas>
+        <div class="hud top"><span id="hudL">Demo · schematic room</span><span id="hudR"><span class="dot on"></span>Ready</span></div>
+        <div class="hud bot"><span id="hudB">Tap any object. Cyan lines are its pull on you; brighter is stronger.</span></div>
+        <div class="stage-actions">
+          <button class="chipbtn" id="freeze" hidden>Freeze</button>
+          <button class="chipbtn" id="newPhoto" hidden>New photo</button>
+        </div>
+        <div class="drop" id="drop" hidden></div>
+      </div>
+      <input type="file" id="file" accept="image/*" hidden>
+      <video id="vid" playsinline muted hidden></video>
+    </div>
+
+    <aside class="panel" id="selPanel" aria-live="polite">
+      <div id="selEmpty" class="empty" hidden>Tap an object in the scene to see how hard it pulls on you.</div>
+      <div id="selBody">
+        <div class="eyebrow">Selected</div>
+        <h1 class="sel-name" id="sName">—</h1>
+        <div class="chips" id="sChips"></div>
+        <div class="force">
+          <div class="eyebrow">Pulls on you with</div>
+          <div class="big" id="sForce">—</div>
+          <div class="cmp" id="sCmp"></div>
+          <div class="cmp2" id="sCmp2"></div>
+          <div class="scale" id="sScale" aria-hidden="true"></div>
+        </div>
+        <div class="fields">
+          <div class="field full">
+            <label for="fType">Object type</label>
+            <select class="inp" id="fType"></select>
+          </div>
+          <div class="field">
+            <label for="fMass">Mass (kg)</label>
+            <input class="inp" id="fMass" type="number" inputmode="decimal" min="0.001" step="any">
+          </div>
+          <div class="field">
+            <label for="fDist">Distance (m)</label>
+            <input class="inp" id="fDist" type="number" inputmode="decimal" min="0.05" step="any">
+          </div>
+          <div class="field full">
+            <input type="range" id="fDistR" min="0" max="1000" aria-label="Distance slider">
+            <div class="row" style="justify-content:space-between"><span class="small" id="fSrc" style="margin:0"></span><button class="link" id="fReset">Reset to estimate</button></div>
+          </div>
+        </div>
+        <details class="math"><summary>Show the math</summary><pre id="sMath"></pre></details>
+        <div class="nb"><div class="eyebrow">It also pulls on nearby objects</div><ul id="sNb"></ul></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="main">
+    <section class="panel">
+      <div class="phead"><h2>Who pulls on you hardest</h2><span class="eyebrow" id="rCount">0 tracked</span></div>
+      <ul class="rank" id="rank"></ul>
+      <div class="subh"><span class="eyebrow">Beyond the room · today</span></div>
+      <ul class="rank sky" id="skyRank"></ul>
+      <p class="small" id="earthCmp"></p>
+      <div class="you"><label for="youMass">Your mass (kg)</label><input class="inp" id="youMass" type="number" inputmode="decimal" min="1" step="any" value="70"></div>
+    </section>
+    <section class="panel">
+      <div class="phead"><h2>Why the numbers are so small</h2></div>
+      <div class="laws two">
+        <div class="law"><div class="f">m₁ ↔ m₂</div><h3>Everything pulls</h3><p>Your mug pulls on you, and you pull back on it with exactly the same force.</p></div>
+        <div class="law"><div class="f">F ∝ m</div><h3>More mass, more pull</h3><p>A 7 kg bowling ball pulls 20 times harder than a 350 g mug at the same distance.</p></div>
+        <div class="law"><div class="f">F ∝ 1/r²</div><h3>Distance cuts it fast</h3><p>Twice as far means a quarter of the pull. Ten times as far, one hundredth.</p></div>
+        <div class="law"><div class="f">G ≈ 10⁻¹⁰</div><h3>Why you never feel it</h3><p>Room objects pull with billionths of a newton. Earth pulls with hundreds.</p></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="sec-title"><h2>PHONE INSTRUMENTS</h2><p>Sensors in your iPhone SE that the scanner now uses.</p></div>
+  <div class="inst">
+    <section class="panel">
+      <div class="phead"><h2>Accelerometer · measured g</h2><span class="status" id="aStat"><span class="dot"></span>Off</span></div>
+      <div class="readout" id="aVal">—<small>m/s²</small></div>
+      <canvas class="spark" id="spark" width="600" height="112" aria-label="Live acceleration trace"></canvas>
+      <dl class="kv">
+        <dt>Predicted here</dt><dd id="gPred">—</dd>
+        <dt>Two-side calibrated</dt><dd id="gCal">—</dd>
+        <dt>Difference</dt><dd id="gDiff">—</dd>
+      </dl>
+      <div class="btnrow">
+        <button class="cta" id="enableSensors">Enable motion sensors</button>
+        <button class="cta ghost" id="capUp" disabled>Capture face up</button>
+        <button class="cta ghost" id="capDn" disabled>Capture face down</button>
+      </div>
+      <p class="small">This is the one number here that is measured, not estimated. The chip has a small offset of 1 to 2%. Lay the phone flat and still, capture face up, then face down. Averaging the two cancels most of the offset.</p>
+      <div class="fields" style="margin-top:12px">
+        <div class="field"><label for="lat">Latitude (°)</label><input class="inp" id="lat" type="number" inputmode="decimal" step="any" value="40.71"></div>
+        <div class="field"><label for="alt">Altitude (m)</label><input class="inp" id="alt" type="number" inputmode="decimal" step="any" value="10"></div>
+      </div>
+      <div class="btnrow"><button class="link" id="geo">Use my location</button><span class="small" id="geoMsg" style="margin:0"></span></div>
+    </section>
+
+    <section class="panel">
+      <div class="phead"><h2>Tilt rangefinder</h2><span class="status" id="tStat"><span class="dot"></span>Manual angle</span></div>
+      <div class="readout" id="tDist">—<small>m</small></div>
+      <svg class="diag" viewBox="0 0 300 110" role="img" aria-label="Diagram: phone at height h looks down at angle theta to the object's base at distance d">
+        <line x1="20" y1="96" x2="290" y2="96" stroke="#858799" stroke-width="1"/>
+        <line x1="30" y1="96" x2="30" y2="20" stroke="#858799" stroke-dasharray="3 3"/>
+        <rect x="24" y="12" width="12" height="18" rx="2" fill="none" stroke="#E9ECF2"/>
+        <line id="ray" x1="30" y1="20" x2="250" y2="96" stroke="#00E7FF" stroke-width="1.5"/>
+        <circle id="rayEnd" cx="250" cy="96" r="4" fill="#B9FF38"/>
+        <text x="40" y="62" fill="#858799" font-family="Geist Mono, monospace" font-size="11">h</text>
+        <text x="140" y="108" fill="#858799" font-family="Geist Mono, monospace" font-size="11">d = h · tan(β)</text>
+        <path d="M30 40 A20 20 0 0 1 48 26" fill="none" stroke="#8B5CFF"/>
+        <text x="52" y="36" fill="#8B5CFF" font-family="Geist Mono, monospace" font-size="11">β</text>
+      </svg>
+      <dl class="kv">
+        <dt>Phone tilt β</dt><dd id="tAng">—</dd>
+      </dl>
+      <div class="fields" style="margin-top:10px">
+        <div class="field"><label for="tH">Camera height (m)</label><input class="inp" id="tH" type="number" inputmode="decimal" step="any" value="1.40"></div>
+        <div class="field" id="tManWrap"><label for="tMan">Manual angle (°)</label><input class="inp" id="tMan" type="number" inputmode="decimal" min="5" max="85" step="any" value="62"></div>
+      </div>
+      <div class="btnrow"><button class="cta" id="tApply">Apply to selected</button></div>
+      <p class="small">Hold the phone at chest height, aim the center crosshair at the spot where the object touches the floor, then tap Apply. This uses real geometry instead of guessing from how big the object looks.</p>
+    </section>
+
+    <section class="panel">
+      <div class="phead"><h2>Sky · Sun and Moon</h2><span class="eyebrow" id="skyDate"></span></div>
+      <div class="readout" id="sunF">—<small>N</small></div>
+      <dl class="kv" id="skyKv"></dl>
+      <p class="small">The Sun pulls on you hundreds of millions of times harder than anything in the room. You still never feel it, because you and Earth fall around the Sun together. What you can feel from the Moon and Sun is the tiny difference across Earth's width: the tides.</p>
+    </section>
+  </div>
+
+  <footer>Masses are typical values for each kind of object. Distance comes from how big the object looks unless you set it with the rangefinder or by hand. Treat the numbers as good estimates. Object recognition runs on your phone with TensorFlow.js COCO-SSD; nothing is uploaded.</footer>
+</div>
+
+<script>
+(() => {
+"use strict";
+const CONFIG = {
+  libs: ["https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js", "https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"],
+  libsFallback: ["https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js", "https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"],
+  modelUrl: null
+};
+const G = 6.674e-11;
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem("fp_"+k); return v==null? d : JSON.parse(v);}catch(e){return d;} },
+  set(k, v){ try{ localStorage.setItem("fp_"+k, JSON.stringify(v)); }catch(e){} }
+};
+
+// typical mass (kg) and largest dimension (m) for COCO classes
+const T = {
+ "person":[70,1.7],"bicycle":[13,1.7],"car":[1500,4.5],"motorcycle":[200,2.1],"airplane":[40000,35],"bus":[12000,12],"train":[100000,25],"truck":[9000,7],"boat":[1000,6],
+ "traffic light":[20,1],"fire hydrant":[70,0.8],"stop sign":[5,0.75],"parking meter":[30,1.5],"bench":[25,1.5],"bird":[0.3,0.25],"cat":[4.5,0.45],"dog":[25,0.7],
+ "horse":[500,2.4],"sheep":[70,1.2],"cow":[700,2.2],"elephant":[5000,3.2],"bear":[250,1.8],"zebra":[350,2.3],"giraffe":[1000,5],"backpack":[3,0.45],"umbrella":[0.5,0.9],
+ "handbag":[1,0.3],"tie":[0.05,0.5],"suitcase":[5,0.65],"frisbee":[0.18,0.27],"skis":[3,1.7],"snowboard":[4,1.5],"sports ball":[0.43,0.22],"kite":[0.3,1],
+ "baseball bat":[0.9,0.84],"baseball glove":[0.6,0.3],"skateboard":[3,0.8],"surfboard":[6,2.2],"tennis racket":[0.3,0.68],"bottle":[0.8,0.25],"wine glass":[0.2,0.2],
+ "cup":[0.35,0.1],"fork":[0.05,0.19],"knife":[0.08,0.22],"spoon":[0.04,0.17],"bowl":[0.4,0.15],"banana":[0.12,0.19],"apple":[0.18,0.08],"sandwich":[0.2,0.12],
+ "orange":[0.14,0.08],"broccoli":[0.3,0.15],"carrot":[0.07,0.18],"hot dog":[0.1,0.17],"pizza":[0.8,0.35],"donut":[0.07,0.09],"cake":[1.2,0.25],"chair":[7,0.9],
+ "couch":[45,2],"potted plant":[3,0.5],"bed":[60,2],"dining table":[30,1.5],"toilet":[40,0.75],"tv":[12,1],"laptop":[1.8,0.33],"mouse":[0.1,0.11],"remote":[0.15,0.18],
+ "keyboard":[0.8,0.44],"cell phone":[0.18,0.14],"microwave":[13,0.5],"oven":[60,0.8],"toaster":[2,0.3],"sink":[10,0.6],"refrigerator":[80,1.75],"book":[0.5,0.24],
+ "clock":[0.8,0.3],"vase":[1.2,0.3],"scissors":[0.1,0.2],"teddy bear":[0.4,0.35],"hair drier":[0.6,0.25],"toothbrush":[0.02,0.19],"bowling ball":[7.3,0.22]
+};
+// reference weights (N) for "about the weight of" comparisons
+const REFS = [
+  ["a bacterium", 1e-14, "bacterium"],["a red blood cell", 2.6e-13, "blood cell"],["a dust mote", 5e-12, "dust"],
+  ["a pollen grain", 8e-11, "pollen"],["a grain of fine sand", 1.4e-8, "sand"],["a grain of salt", 6e-7, "salt"],["a mosquito", 2.5e-5, "mosquito"]
+];
+
+const S = {
+  mode: "demo", objs: [], sel: null, nextId: 1,
+  W: 1200, H: 900, f: 0,
+  you: store.get("you", 70), lat: store.get("lat", 40.71), alt: store.get("alt", 10), camH: store.get("camH", 1.4),
+  model: null, modelState: "idle", stream: null, frozen: false, photo: null, busy: false,
+  motion: { on:false, mag:null, ema:null, z:0, buf:[], samples:null, up:null, dn:null },
+  beta: null, lastPanel: 0
+};
+
+const cv = $("cv"), ctx = cv.getContext("2d"), vid = $("vid");
+const inFrame = (() => { try { return window.self !== window.top; } catch(e){ return true; } })();
+if (inFrame) $("frameNote").hidden = false;
+
+// ---------- formatting ----------
+const SUP = {"-":"⁻","0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹"};
+function sci(x, p=2){
+  if (!isFinite(x) || x === 0) return "0";
+  const e = Math.floor(Math.log10(Math.abs(x))); const m = x / Math.pow(10, e);
+  if (e >= -2 && e <= 3) return x.toPrecision(p+1).replace(/\.?0+$/,"");
+  return m.toFixed(p) + " × 10" + String(e).split("").map(c=>SUP[c]).join("");
+}
+function fmtM(d){ return d < 1 ? (d*100).toFixed(0)+" cm" : d < 10 ? d.toFixed(2)+" m" : d.toFixed(1)+" m"; }
+function fmtKg(m){ return m < 1 ? (m*1000).toFixed(m<0.1?1:0)+" g" : m < 1000 ? (+m.toPrecision(3))+" kg" : sci(m)+" kg"; }
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+// ---------- physics ----------
+const force = (m1, m2, r) => G*m1*m2/(r*r);
+function localG(latDeg, h){
+  const s2 = Math.sin(latDeg*Math.PI/180)**2;
+  return 9.7803253359*(1+0.00193185265241*s2)/Math.sqrt(1-0.00669437999013*s2) - 3.086e-6*h;
+}
+function focal(W, H){ return (Math.max(W,H)/2)/Math.tan(31.55*Math.PI/180); } // iPhone SE main camera, ~63° across the long side
+function name(o){ return o.label || o.cls; }
+function mass(o){ return o.mass != null ? o.mass : (T[o.cls]||[1,0.3])[0]; }
+function distEst(o){
+  if (o.demoD) return o.demoD;
+  const real = (T[o.cls]||[1,0.3])[1];
+  const px = Math.max(o.bbox[2], o.bbox[3]);
+  return Math.min(200, Math.max(0.15, real*S.f/px));
+}
+function dist(o){ return o.dMode === "size" ? distEst(o) : o.d; }
+function pos(o){
+  const [x,y,w,h] = o.bbox, cx = x+w/2, cy = y+h/2;
+  const v = [(cx-S.W/2)/S.f, (cy-S.H/2)/S.f, 1]; const n = Math.hypot(...v), d = dist(o);
+  return v.map(c => c/n*d);
+}
+function between(a, b){ const p=pos(a), q=pos(b); return Math.max(0.05, Math.hypot(p[0]-q[0],p[1]-q[1],p[2]-q[2])); }
+function pullOnYou(o){ return force(mass(o), S.you, dist(o)); }
+
+// ---------- sky ----------
+function sky(date){
+  const jd = date.getTime()/86400000 + 2440587.5, n = jd - 2451545, T2 = n/36525, r = Math.PI/180;
+  const g = (357.529 + 0.98560028*n)*r;
+  const sunAU = 1.00014 - 0.01671*Math.cos(g) - 0.00014*Math.cos(2*g);
+  const D = (297.8501921 + 445267.1114034*T2)*r, M = (357.5291092 + 35999.0502909*T2)*r, Mp = (134.9633964 + 477198.8675055*T2)*r;
+  const moonKm = 385000.56 - 20905.355*Math.cos(Mp) - 3699.111*Math.cos(2*D-Mp) - 2955.968*Math.cos(2*D) - 569.925*Math.cos(2*Mp) + 48.888*Math.cos(M) - 3.149*Math.cos(2*D-M-Mp) + 246.158*Math.cos(2*D-2*Mp) - 152.138*Math.cos(2*D-M-Mp) - 170.733*Math.cos(2*D+Mp) - 204.586*Math.cos(2*D-M) - 129.62*Math.cos(Mp-M) + 108.743*Math.cos(D) + 104.755*Math.cos(Mp+M);
+  return { sunM: sunAU*1.495978707e11, moonM: moonKm*1000, sunAU, moonKm };
+}
+
+// ---------- demo scene ----------
+const DEMO = [
+  {cls:"tv", bbox:[470,140,260,160], d:3.6},
+  {cls:"couch", bbox:[60,330,400,220], d:3.3},
+  {cls:"potted plant", bbox:[1010,250,130,300], d:3.1},
+  {cls:"dining table", bbox:[560,470,440,190], d:2.1},
+  {cls:"cup", bbox:[640,418,46,54], d:2.15},
+  {cls:"laptop", bbox:[770,380,150,92], d:2.25},
+  {cls:"chair", bbox:[250,520,170,270], d:1.8},
+  {cls:"bowling ball", bbox:[500,740,110,110], d:1.25},
+  {cls:"cat", bbox:[860,720,210,130], d:1.3}
+];
+function loadDemo(){
+  S.W = 1200; S.H = 900; S.f = focal(S.W, S.H); cv.width = S.W; cv.height = S.H;
+  S.objs = DEMO.map(o => ({ id:S.nextId++, cls:o.cls, label:o.label||null, mass:o.mass ?? null, bbox:o.bbox.slice(), demoD:o.d, dMode:"size", d:o.d, score:1, seen:Infinity }));
+  S.sel = S.objs.find(o => o.cls === "bowling ball").id;
+}
+function drawDemo(){
+  const W=S.W,H=S.H, c=ctx;
+  c.fillStyle="#07070C"; c.fillRect(0,0,W,H);
+  const vx=600, vy=330;
+  // back wall
+  c.fillStyle="#0c0c14"; c.fillRect(0,0,W,vy+230);
+  c.strokeStyle="rgba(233,236,242,.06)"; c.lineWidth=1;
+  for(let x=0;x<=W;x+=60){ c.beginPath(); c.moveTo(x,0); c.lineTo(x,vy+230); c.stroke(); }
+  // floor
+  const fy = vy+230; c.fillStyle="#0a0a11"; c.fillRect(0,fy,W,H-fy);
+  c.strokeStyle="rgba(0,231,255,.10)";
+  for(let i=-14;i<=14;i++){ c.beginPath(); c.moveTo(vx+i*40, fy); c.lineTo(vx+i*260, H); c.stroke(); }
+  for(let k=0;k<9;k++){ const t=Math.pow(k/8,1.8), y=fy+(H-fy)*t; c.beginPath(); c.moveTo(0,y); c.lineTo(W,y); c.stroke(); }
+  c.strokeStyle="rgba(233,236,242,.18)"; c.beginPath(); c.moveTo(0,fy); c.lineTo(W,fy); c.stroke();
+  const fill="#1B1C28", edge="rgba(233,236,242,.28)";
+  const R=(x,y,w,h,r=6)=>{ c.beginPath(); c.roundRect(x,y,w,h,r); c.fillStyle=fill; c.fill(); c.strokeStyle=edge; c.stroke(); };
+  // tv
+  R(470,140,260,150,4); c.fillStyle="#07070C"; c.fillRect(480,150,240,130); c.fillStyle="rgba(0,231,255,.07)"; c.fillRect(480,150,240,130); R(590,290,20,12,1);
+  // couch
+  R(60,380,400,130,14); R(60,330,400,80,14); R(40,380,50,150,12); R(430,380,50,150,12);
+  // plant
+  R(1040,450,80,100,6); c.beginPath(); c.arc(1080,380,70,0,Math.PI*2); c.fillStyle="#141824"; c.fill(); c.strokeStyle=edge; c.stroke();
+  // table
+  R(560,470,440,26,3); R(585,496,18,164,2); R(957,496,18,164,2);
+  // cup + laptop
+  R(640,420,40,50,6); c.beginPath(); c.arc(686,440,10,-Math.PI/2,Math.PI/2); c.strokeStyle=edge; c.stroke();
+  R(780,380,130,82,4); c.fillStyle="rgba(139,92,255,.10)"; c.fillRect(788,388,114,66); R(770,462,150,10,2);
+  // chair
+  R(260,520,150,150,8); R(260,660,150,30,6); R(270,690,14,100,2); R(386,690,14,100,2);
+  // ball
+  c.beginPath(); c.arc(555,795,55,0,Math.PI*2); c.fillStyle="#141420"; c.fill(); c.strokeStyle=edge; c.stroke();
+  [[540,775],[560,770],[552,790]].forEach(([x,y])=>{c.beginPath();c.arc(x,y,5,0,Math.PI*2);c.fillStyle="#07070C";c.fill();});
+  // cat
+  c.beginPath(); c.ellipse(965,800,95,45,0,0,Math.PI*2); c.fillStyle=fill; c.fill(); c.strokeStyle=edge; c.stroke();
+  c.beginPath(); c.arc(885,770,34,0,Math.PI*2); c.fill(); c.stroke();
+  c.beginPath(); c.moveTo(862,748); c.lineTo(866,720); c.lineTo(882,740); c.moveTo(890,738); c.lineTo(904,716); c.lineTo(910,748); c.fill(); c.stroke();
+}
+
+// ---------- overlay ----------
+function drawOverlay(){
+  const c = ctx, k = S.W / Math.max(1, cv.clientWidth), W=S.W, H=S.H;
+  const ax = W/2, ay = H - 6*k;
+  const objs = S.objs; if (!objs.length) return;
+  const compact = cv.clientWidth < 640;
+  const fs = objs.map(pullOnYou), lmin = Math.log10(Math.min(...fs)), lmax = Math.log10(Math.max(...fs));
+  const sel = objs.find(o => o.id === S.sel);
+  // pull lines to you
+  objs.forEach((o,i) => {
+    const t = lmax-lmin < 1e-9 ? 1 : (Math.log10(fs[i])-lmin)/(lmax-lmin);
+    const [x,y,w,h] = o.bbox;
+    c.strokeStyle = `rgba(0,231,255,${(0.12+0.78*t).toFixed(3)})`; c.lineWidth = (0.8+2*t)*k;
+    c.beginPath(); c.moveTo(ax, ay); c.lineTo(x+w/2, y+h); c.stroke();
+  });
+  // neighbour lines
+  if (sel) {
+    const [sx,sy,sw,sh] = sel.bbox;
+    c.setLineDash([4*k, 5*k]);
+    objs.forEach(o => { if (o===sel) return; const [x,y,w,h]=o.bbox;
+      c.strokeStyle="rgba(139,92,255,.75)"; c.lineWidth=1.2*k; c.beginPath(); c.moveTo(sx+sw/2, sy+sh/2); c.lineTo(x+w/2,y+h/2); c.stroke(); });
+    c.setLineDash([]);
+  }
+  // boxes + labels
+  objs.forEach((o,i) => {
+    const [x,y,w,h] = o.bbox, isSel = o===sel, L = Math.min(18*k, w/3, h/3);
+    c.strokeStyle = isSel ? "#B9FF38" : "rgba(233,236,242,.55)"; c.lineWidth = (isSel?2:1.2)*k;
+    c.beginPath();
+    c.moveTo(x,y+L); c.lineTo(x,y); c.lineTo(x+L,y);
+    c.moveTo(x+w-L,y); c.lineTo(x+w,y); c.lineTo(x+w,y+L);
+    c.moveTo(x+w,y+h-L); c.lineTo(x+w,y+h); c.lineTo(x+w-L,y+h);
+    c.moveTo(x+L,y+h); c.lineTo(x,y+h); c.lineTo(x,y+h-L);
+    c.stroke();
+    if (isSel){ c.fillStyle="rgba(185,255,56,.05)"; c.fillRect(x,y,w,h); }
+    if (compact && !isSel) return;
+    const txt = `${name(o).toUpperCase()}  ${fmtM(dist(o))}`;
+    c.font = `500 ${11*k}px "Geist Mono", ui-monospace, monospace`;
+    const tw = c.measureText(txt).width + 12*k, th = 18*k;
+    let lx = Math.min(Math.max(0, x), W - tw), ly = y - th - 3*k; if (ly < 28*k) ly = y + 3*k;
+    c.fillStyle = isSel ? "#B9FF38" : "rgba(7,7,12,.82)"; c.fillRect(lx, ly, tw, th);
+    c.fillStyle = isSel ? "#07070C" : "#E9ECF2"; c.textBaseline="middle"; c.fillText(txt, lx+6*k, ly+th/2+0.5*k);
+  });
+  // you marker
+  c.fillStyle="#07070C"; c.strokeStyle="#00E7FF"; c.lineWidth=1.5*k;
+  c.beginPath(); c.arc(ax, ay-2*k, 6*k, 0, Math.PI*2); c.fill(); c.stroke();
+  c.font = `500 ${10*k}px "Geist Mono", monospace`; c.fillStyle="#00E7FF"; c.textAlign="center";
+  c.fillText("YOU", ax, ay-18*k); c.textAlign="left";
+}
+function drawCrosshair(){
+  const k = S.W / Math.max(1, cv.clientWidth), x=S.W/2, y=S.H/2, c=ctx;
+  c.strokeStyle="rgba(233,236,242,.7)"; c.lineWidth=1*k;
+  c.beginPath(); c.moveTo(x-14*k,y); c.lineTo(x-4*k,y); c.moveTo(x+4*k,y); c.lineTo(x+14*k,y);
+  c.moveTo(x,y-14*k); c.lineTo(x,y-4*k); c.moveTo(x,y+4*k); c.lineTo(x,y+14*k); c.stroke();
+}
+function draw(){
+  if (S.mode === "demo") drawDemo();
+  else if (S.mode === "live" && S.stream) { if (S.frozen && S.still) ctx.drawImage(S.still, 0, 0, S.W, S.H); else if (vid.readyState >= 2) ctx.drawImage(vid, 0, 0, S.W, S.H); }
+  else if (S.mode === "photo" && S.photo) ctx.drawImage(S.photo, 0, 0, S.W, S.H);
+  else { ctx.fillStyle="#07070C"; ctx.fillRect(0,0,S.W,S.H); }
+  drawOverlay();
+  if (S.mode === "live" && S.stream) drawCrosshair();
+}
+
+// ---------- selection panel ----------
+const typeSel = $("fType");
+typeSel.innerHTML = Object.keys(T).sort().map(k => `<option value="${esc(k)}">${esc(k)}</option>`).join("");
+let panelFor = null;
+const DMIN = 0.1, DMAX = 30;
+const d2r = d => Math.round(1000*Math.log(d/DMIN)/Math.log(DMAX/DMIN));
+const r2d = r => DMIN*Math.pow(DMAX/DMIN, r/1000);
+
+function renderScale(F){
+  const lo=-14.5, hi=-4, p = v => ((Math.log10(v)-lo)/(hi-lo)*100);
+  const pf = Math.max(0, Math.min(100, p(F)));
+  $("sScale").innerHTML = `<div class="track"></div><div class="fill" style="width:${pf}%"></div>` +
+    REFS.map((r,i) => `<div class="tick" style="left:${p(r[1])}%"></div><div class="tl ${i%2?'dn':'up'}" style="left:${Math.min(94,Math.max(6,p(r[1])))}%">${r[2]}</div>`).join("") +
+    `<div class="pin" style="left:${pf}%"></div>`;
+}
+function compare(F){
+  let best = REFS[0];
+  for (const r of REFS) if (r[1] <= F) best = r;
+  const ratio = F / best[1];
+  if (ratio < 1) return `Less than the weight of ${best[0]}`;
+  if (ratio < 1.6) return `About the weight of ${best[0]}`;
+  return `About ${ratio < 10 ? ratio.toFixed(1) : Math.round(ratio).toLocaleString()}× the weight of ${best[0]}`;
+}
+function renderSel(full){
+  const o = S.objs.find(x => x.id === S.sel);
+  $("selEmpty").hidden = !!o; $("selBody").hidden = !o;
+  if (!o) { panelFor = null; return; }
+  const m = mass(o), d = dist(o), F = pullOnYou(o), gl = localG(S.lat, S.alt);
+  $("sName").textContent = name(o);
+  const src = o.dMode === "tilt" ? ["tilt","Distance: rangefinder"] : o.dMode === "manual" ? ["manual","Distance: set by hand"] : ["", S.mode==="demo" ? "Distance: demo layout" : "Distance: apparent size"];
+  $("sChips").innerHTML = `<span class="chip">${S.mode==="demo"?"demo object":"confidence "+Math.round(o.score*100)+"%"}</span><span class="chip ${src[0]}">${src[1]}</span>` + (o.mass!=null ? `<span class="chip manual">mass set by hand</span>` : "");
+  $("sForce").innerHTML = `${sci(F)}<small>N</small>`;
+  $("sCmp").textContent = compare(F);
+  $("sCmp2").textContent = `Earth pulls you ${sci(S.you*gl/F,1)} times harder.`;
+  renderScale(F);
+  $("sMath").textContent =
+`F = G · m₁ · m₂ / r²
+  = 6.674×10⁻¹¹ · ${+m.toPrecision(4)} kg · ${S.you} kg / (${d.toFixed(2)} m)²
+  = ${sci(F,3)} N
+
+m₁ is the ${name(o)}, m₂ is you, r is the distance between you.`;
+  const others = S.objs.filter(x => x !== o).map(x => ({x, r: between(o,x)})).map(e => ({...e, F: force(m, mass(e.x), e.r)})).sort((a,b)=>b.F-a.F).slice(0,4);
+  $("sNb").innerHTML = others.length ? others.map(e => `<li><span style="text-transform:capitalize">${esc(name(e.x))} · ${fmtM(e.r)}</span><span>${sci(e.F)} N</span></li>`).join("") : `<li><span class="small" style="margin:0">No other objects in view.</span></li>`;
+  const active = document.activeElement;
+  if (full || panelFor !== o.id) {
+    typeSel.value = T[o.cls] ? o.cls : "person";
+  }
+  if (active !== $("fMass")) $("fMass").value = +m.toPrecision(4);
+  if (active !== $("fDist")) $("fDist").value = d.toFixed(2);
+  if (active !== $("fDistR")) $("fDistR").value = d2r(d);
+  $("fSrc").textContent = o.dMode === "size" ? "Drag to set the distance yourself." : `Estimate was ${fmtM(distEst(o))}.`;
+  $("fReset").hidden = o.dMode === "size" && o.mass == null;
+  panelFor = o.id;
+}
+function renderRank(){
+  const list = S.objs.map(o => ({o, F: pullOnYou(o)})).sort((a,b)=>b.F-a.F);
+  $("rCount").textContent = `${list.length} tracked`;
+  if (!list.length) { $("rank").innerHTML = `<li class="small" style="padding:8px 10px">No objects yet.</li>`; }
+  else {
+    const lmax = Math.log10(list[0].F), lmin = Math.log10(list[list.length-1].F) - 1;
+    $("rank").innerHTML = list.map(({o,F}) => `<li><button data-id="${o.id}" aria-current="${o.id===S.sel}">
+      <span class="nm">${esc(name(o))}</span><span class="fv">${sci(F)} N</span>
+      <span class="meta">${fmtKg(mass(o))} · ${fmtM(dist(o))}</span><span></span>
+      <span class="bar"><i style="width:${Math.max(3,(Math.log10(F)-lmin)/(lmax-lmin)*100).toFixed(1)}%"></i></span></button></li>`).join("");
+  }
+  const sk = sky(new Date()), fs = force(1.989e30, S.you, sk.sunM), fm = force(7.342e22, S.you, sk.moonM), gl = localG(S.lat, S.alt);
+  const lmx = Math.log10(fs), lmn = Math.log10(fm) - 1;
+  $("skyRank").innerHTML = [["Sun", fs, `${sk.sunAU.toFixed(4)} AU`], ["Moon", fm, `${Math.round(sk.moonKm).toLocaleString()} km`]].map(([n,F,d]) =>
+    `<li><button tabindex="-1" style="cursor:default"><span class="nm">${n}</span><span class="fv">${sci(F,3)} N</span><span class="meta">${d}</span><span></span><span class="bar"><i style="width:${((Math.log10(F)-lmn)/(lmx-lmn)*100).toFixed(1)}%"></i></span></button></li>`).join("");
+  $("earthCmp").textContent = `For comparison, Earth pulls you with ${(S.you*gl).toFixed(1)} N.`;
+  // sky card
+  $("skyDate").textContent = new Date().toLocaleDateString(undefined, {month:"short", day:"numeric", year:"numeric"});
+  $("sunF").innerHTML = `${sci(fs,3)}<small>N from the Sun</small>`;
+  $("skyKv").innerHTML = `<dt>Sun distance</dt><dd>${sk.sunAU.toFixed(4)} AU</dd><dt>Moon pull</dt><dd>${sci(fm,3)} N</dd><dt>Moon distance</dt><dd>${Math.round(sk.moonKm).toLocaleString()} km</dd><dt>Sun vs Moon</dt><dd>${Math.round(fs/fm)}×</dd>`;
+}
+function renderAll(full){ renderSel(full); renderRank(); }
+
+$("rank").addEventListener("click", e => { const b = e.target.closest("button[data-id]"); if (!b) return; S.sel = +b.dataset.id; renderAll(true); draw(); });
+typeSel.addEventListener("change", () => { const o = cur(); if (!o) return; o.cls = typeSel.value; o.label = null; o.mass = null; renderAll(true); draw(); });
+$("fMass").addEventListener("input", e => { const o = cur(), v = parseFloat(e.target.value); if (!o || !(v>0)) return; o.mass = v; renderAll(); draw(); });
+$("fDist").addEventListener("input", e => { const o = cur(), v = parseFloat(e.target.value); if (!o || !(v>=0.05)) return; o.dMode="manual"; o.d=v; renderAll(); draw(); });
+$("fDistR").addEventListener("input", e => { const o = cur(); if (!o) return; o.dMode="manual"; o.d=+r2d(+e.target.value).toFixed(2); renderAll(); draw(); });
+$("fReset").addEventListener("click", () => { const o = cur(); if (!o) return; o.dMode="size"; o.mass=null; renderAll(true); draw(); });
+$("youMass").value = S.you;
+$("youMass").addEventListener("input", e => { const v = parseFloat(e.target.value); if (v>0){ S.you=v; store.set("you",v); renderAll(); draw(); } });
+const cur = () => S.objs.find(x => x.id === S.sel);
+
+// tap to select
+cv.addEventListener("pointerdown", e => {
+  const r = cv.getBoundingClientRect(), x = (e.clientX-r.left)*S.W/r.width, y = (e.clientY-r.top)*S.H/r.height;
+  const hits = S.objs.filter(o => x>=o.bbox[0] && x<=o.bbox[0]+o.bbox[2] && y>=o.bbox[1] && y<=o.bbox[1]+o.bbox[3]).sort((a,b)=>a.bbox[2]*a.bbox[3]-b.bbox[2]*b.bbox[3]);
+  let pick = hits[0];
+  if (!pick && S.objs.length){
+    const near = S.objs.map(o => ({o, dd: Math.hypot(o.bbox[0]+o.bbox[2]/2-x, o.bbox[1]+o.bbox[3]/2-y)})).sort((a,b)=>a.dd-b.dd)[0];
+    if (near.dd < S.W*0.12) pick = near.o;
+  }
+  if (pick){ S.sel = pick.id; renderAll(true); draw(); }
+});
+
+// ---------- detector ----------
+function loadScript(src){ return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = () => rej(new Error(src)); document.head.appendChild(s); }); }
+async function ensureModel(){
+  if (S.model) return S.model;
+  if (S.modelPromise) return S.modelPromise;
+  S.modelPromise = (async () => {
+    setHud("busy", "Loading detector");
+    if (!window.cocoSsd) {
+      try { for (const s of CONFIG.libs) await loadScript(s); }
+      catch(e){ for (const s of CONFIG.libsFallback) await loadScript(s); }
+    }
+    let m;
+    try { m = CONFIG.modelUrl ? await cocoSsd.load({ modelUrl: CONFIG.modelUrl }) : await cocoSsd.load({ base: "mobilenet_v2" }); }
+    catch(e){ m = await cocoSsd.load({ base: "lite_mobilenet_v2" }); }
+    S.model = m; setHud("on", "Detector ready"); return m;
+  })();
+  try { return await S.modelPromise; } catch(e){ S.modelPromise = null; setHud("warn", "Detector failed to load"); throw e; }
+}
+function setHud(state, text){ $("hudR").innerHTML = `<span class="dot ${state}"></span>${esc(text)}`; }
+function iou(a, b){
+  const x1=Math.max(a[0],b[0]), y1=Math.max(a[1],b[1]), x2=Math.min(a[0]+a[2],b[0]+b[2]), y2=Math.min(a[1]+a[3],b[1]+b[3]);
+  const inter = Math.max(0,x2-x1)*Math.max(0,y2-y1); return inter/(a[2]*a[3]+b[2]*b[3]-inter);
+}
+function merge(dets, smooth){
+  const now = performance.now(), used = new Set();
+  dets.forEach(d => {
+    let best=null, bi=0.2;
+    S.objs.forEach(o => { if (used.has(o)) return; if (o.detCls !== d.class) return; const v = iou(o.bbox, d.bbox); if (v > bi){ bi=v; best=o; } });
+    if (best){ used.add(best); best.bbox = smooth ? best.bbox.map((v,i)=>v*0.5+d.bbox[i]*0.5) : d.bbox; best.score=d.score; best.seen=now; }
+    else { const o = { id:S.nextId++, cls:d.class, detCls:d.class, label:null, mass:null, bbox:d.bbox, dMode:"size", d:1, score:d.score, seen:now }; S.objs.push(o); used.add(o); }
+  });
+  S.objs = S.objs.filter(o => now - o.seen < (o.id === S.sel ? 4000 : 1200));
+  if (!S.objs.some(o => o.id === S.sel)) S.sel = S.objs.length ? S.objs.slice().sort((a,b)=>pullOnYou(b)-pullOnYou(a))[0].id : null;
+}
+
+// ---------- modes ----------
+function setMode(m){
+  if (S.mode === "live" && m !== "live") stopCam();
+  S.mode = m; S.frozen = false;
+  document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === m));
+  $("freeze").hidden = true; $("newPhoto").hidden = true; $("drop").hidden = true;
+  if (m === "demo"){ loadDemo(); $("hudL").textContent = "Demo · schematic room"; setHud("on","Ready"); $("hudB").textContent = "Tap any object. Cyan lines are its pull on you; brighter is stronger."; }
+  if (m === "live"){ S.objs=[]; S.sel=null; $("hudL").textContent = "Live · rear camera"; $("hudB").textContent = "Point at a room. Freeze to inspect."; startCam(); }
+  if (m === "photo"){ S.objs=[]; S.sel=null; S.photo=null; $("hudL").textContent = "Photo"; setHud("", "Waiting for photo"); $("hudB").textContent = "Take or choose a photo of a room.";
+    showDrop("Scan a photo", "Take a picture of a room or pick one from your library. Detection runs on this device.", "Take or choose photo", () => $("file").click()); ensureModel().catch(()=>{}); }
+  renderAll(true); draw();
+}
+function showDrop(title, text, btn, fn){
+  const d = $("drop"); d.hidden = false;
+  d.innerHTML = `<div><div class="eyebrow">${esc(title)}</div><p>${esc(text)}</p>${btn?`<button class="cta" id="dropBtn">${esc(btn)}</button>`:""}</div>`;
+  if (btn) $("dropBtn").onclick = fn;
+}
+document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => setMode(b.dataset.mode)));
+
+async function startCam(){
+  S.W = 1280; S.H = 720;
+  if (!navigator.mediaDevices?.getUserMedia){ camFail("This browser has no camera access here."); return; }
+  setHud("busy", "Starting camera");
+  try {
+    S.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+  } catch(e){ camFail(inFrame ? "This preview blocks the camera. Use Photo here, or open the standalone file in Safari for live mode." : "Camera permission was denied. Allow camera access for this site in Safari settings, then try again."); return; }
+  if (S.mode !== "live"){ stopCam(); return; }
+  vid.srcObject = S.stream; vid.hidden = true; await vid.play().catch(()=>{});
+  await new Promise(r => vid.videoWidth ? r() : vid.addEventListener("loadedmetadata", r, {once:true}));
+  S.W = vid.videoWidth; S.H = vid.videoHeight; S.f = focal(S.W, S.H); cv.width = S.W; cv.height = S.H;
+  $("freeze").hidden = false; $("freeze").textContent = "Freeze";
+  try { S.wake = await navigator.wakeLock?.request("screen"); } catch(e){}
+  try { await ensureModel(); } catch(e){ return; }
+  setHud("on", "Scanning");
+  loop();
+}
+function camFail(msg){ setHud("warn", "Camera unavailable"); showDrop("Live camera", msg, "Switch to Photo", () => setMode("photo")); }
+function stopCam(){ S.stream?.getTracks().forEach(t => t.stop()); S.stream = null; vid.srcObject = null; try{ S.wake?.release(); }catch(e){} S.wake=null; }
+async function loop(){
+  if (S.mode !== "live" || !S.stream) return;
+  if (!S.frozen){
+    if (!S.busy && S.model && vid.readyState >= 2){
+      S.busy = true;
+      S.model.detect(vid, 20, 0.45).then(d => { if (!S.frozen){ merge(d, true); } }).catch(()=>{}).finally(() => { S.busy = false; });
+    }
+    draw();
+    const now = performance.now();
+    if (now - S.lastPanel > 250){ S.lastPanel = now; renderAll(); }
+  }
+  requestAnimationFrame(loop);
+}
+$("freeze").addEventListener("click", () => {
+  S.frozen = !S.frozen; $("freeze").textContent = S.frozen ? "Resume" : "Freeze";
+  if (S.frozen){ const c = document.createElement("canvas"); c.width = S.W; c.height = S.H; c.getContext("2d").drawImage(vid, 0, 0, S.W, S.H); S.still = c; S.objs.forEach(o => o.seen = Infinity); setHud("", "Frozen"); } else { const n = performance.now(); S.objs.forEach(o => o.seen = n); setHud("on","Scanning"); }
+  renderAll(true);
+});
+
+$("file").addEventListener("change", async e => {
+  const file = e.target.files[0]; e.target.value = ""; if (!file) return;
+  const url = URL.createObjectURL(file), img = new Image();
+  img.onload = async () => {
+    const sc = Math.min(1, 1600/Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement("canvas"); c.width = Math.round(img.naturalWidth*sc); c.height = Math.round(img.naturalHeight*sc);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+    S.photo = c; S.W = c.width; S.H = c.height; S.f = focal(S.W, S.H); cv.width = S.W; cv.height = S.H;
+    $("drop").hidden = true; $("newPhoto").hidden = false; S.objs = []; S.sel = null; draw();
+    try { await ensureModel(); } catch(err){ showDrop("Photo", "The detector could not load. Check your connection and try again.", "Try again", () => $("file").click()); return; }
+    setHud("busy", "Detecting");
+    const dets = await S.model.detect(c, 30, 0.35);
+    merge(dets, false); S.objs.forEach(o => o.seen = Infinity);
+    S.sel = S.objs.length ? S.objs.slice().sort((a,b)=>pullOnYou(b)-pullOnYou(a))[0].id : null;
+    setHud("on", `${S.objs.length} objects found`);
+    $("hudB").textContent = S.objs.length ? "Tap any object. Fix its type or mass in the panel if it's wrong." : "Nothing recognized. Try a wider shot with furniture in view.";
+    renderAll(true); draw();
+  };
+  img.src = url;
+});
+$("newPhoto").addEventListener("click", () => $("file").click());
+
+// ---------- sensors ----------
+const spark = $("spark"), sctx = spark.getContext("2d");
+function setStat(el, cls, text){ el.className = "status " + cls; el.innerHTML = `<span class="dot ${cls}"></span>${esc(text)}`; }
+async function enableSensors(){
+  const btn = $("enableSensors"); btn.disabled = true;
+  let denied = false;
+  try { if (typeof DeviceMotionEvent !== "undefined" && DeviceMotionEvent.requestPermission){ const r = await DeviceMotionEvent.requestPermission(); if (r !== "granted") denied = true; } } catch(e){ denied = true; }
+  try { if (typeof DeviceOrientationEvent !== "undefined" && DeviceOrientationEvent.requestPermission){ await DeviceOrientationEvent.requestPermission(); } } catch(e){}
+  window.addEventListener("devicemotion", onMotion);
+  window.addEventListener("deviceorientation", onOrient);
+  setStat($("aStat"), "busy", "Listening");
+  setTimeout(() => {
+    if (S.motion.mag == null){
+      const msg = denied ? "Permission denied" : "No sensor data";
+      setStat($("aStat"), "warn", msg);
+      $("aVal").innerHTML = `—<small>m/s²</small>`;
+      $("gDiff").textContent = inFrame ? "Blocked in this preview" : (denied ? "Allow Motion & Orientation Access in Safari settings" : "This device reports no motion data");
+      btn.disabled = false; btn.textContent = "Try again";
+    } else { btn.textContent = "Sensors on"; }
+  }, 1500);
+}
+function onMotion(e){
+  const a = e.accelerationIncludingGravity; if (!a || a.x == null) return;
+  const mag = Math.hypot(a.x, a.y, a.z), M = S.motion;
+  if (M.mag == null){ setStat($("aStat"), "on", "Live"); $("capUp").disabled = false; $("capDn").disabled = false; }
+  M.mag = mag; M.ema = M.ema == null ? mag : M.ema*0.9 + mag*0.1; M.z = a.z;
+  M.buf.push(mag); if (M.buf.length > 240) M.buf.shift();
+  if (M.samples) M.samples.push(Math.abs(a.z));
+}
+function onOrient(e){
+  if (e.beta == null) return;
+  if (S.beta == null){ setStat($("tStat"), "on", "Live tilt"); $("tManWrap").hidden = true; }
+  S.beta = e.beta; renderTilt();
+}
+function capture(side){
+  const M = S.motion, btn = side === "up" ? $("capUp") : $("capDn"); btn.disabled = true; const label = btn.textContent;
+  M.samples = []; btn.textContent = "Hold still…";
+  setTimeout(() => {
+    const s = M.samples; M.samples = null; btn.disabled = false; btn.textContent = label;
+    if (!s.length) return;
+    M[side] = s.reduce((a,b)=>a+b,0)/s.length; renderG();
+  }, 2000);
+}
+$("enableSensors").addEventListener("click", enableSensors);
+$("capUp").addEventListener("click", () => capture("up"));
+$("capDn").addEventListener("click", () => capture("dn"));
+function renderG(){
+  const gp = localG(S.lat, S.alt), M = S.motion;
+  $("gPred").textContent = gp.toFixed(4) + " m/s²";
+  if (M.ema != null) $("aVal").innerHTML = `${M.ema.toFixed(3)}<small>m/s²</small>`;
+  let cal = null;
+  if (M.up != null && M.dn != null){ cal = (M.up + M.dn)/2; $("gCal").textContent = cal.toFixed(4) + " m/s²"; }
+  else $("gCal").textContent = M.up != null ? "Now capture face down" : M.dn != null ? "Now capture face up" : "—";
+  const ref = cal ?? M.ema;
+  if (ref != null) $("gDiff").textContent = `${((ref-gp)/gp*100 >= 0 ? "+" : "")}${((ref-gp)/gp*100).toFixed(2)}% vs predicted`;
+}
+function drawSpark(){
+  const W = spark.width, H = spark.height, b = S.motion.buf, c = sctx;
+  c.clearRect(0,0,W,H);
+  const gp = localG(S.lat, S.alt), lo = gp - 1.5, hi = gp + 1.5, y = v => H - (Math.min(hi,Math.max(lo,v))-lo)/(hi-lo)*H;
+  c.strokeStyle = "rgba(233,236,242,.08)"; c.lineWidth = 1;
+  [lo+0.5, gp, hi-0.5].forEach(v => { c.beginPath(); c.moveTo(0,y(v)); c.lineTo(W,y(v)); c.stroke(); });
+  c.strokeStyle = "rgba(139,92,255,.6)"; c.setLineDash([6,6]); c.beginPath(); c.moveTo(0,y(gp)); c.lineTo(W,y(gp)); c.stroke(); c.setLineDash([]);
+  if (b.length > 1){
+    c.strokeStyle = "#00E7FF"; c.lineWidth = 2; c.beginPath();
+    b.forEach((v,i) => { const x = i/(240-1)*W; i ? c.lineTo(x,y(v)) : c.moveTo(x,y(v)); }); c.stroke();
+    const lx = (b.length-1)/(239)*W; c.fillStyle = "#B9FF38"; c.beginPath(); c.arc(lx, y(b[b.length-1]), 3.5, 0, Math.PI*2); c.fill();
+  } else {
+    c.fillStyle = "#858799"; c.font = "22px 'Geist Mono', monospace"; c.fillText("predicted g ─ ─", 12, y(gp) - 10);
+  }
+}
+(function tick(){ if (S.motion.mag != null){ renderG(); } drawSpark(); setTimeout(() => requestAnimationFrame(tick), 100); })();
+
+function tiltAngle(){ return S.beta != null ? Math.abs(S.beta) : parseFloat($("tMan").value); }
+function tiltDist(){ const b = tiltAngle(); if (!(b > 3 && b < 87)) return null; return S.camH * Math.tan(b*Math.PI/180); }
+function renderTilt(){
+  const b = tiltAngle(), d = tiltDist();
+  $("tAng").textContent = isFinite(b) ? b.toFixed(1) + "°" : "—";
+  $("tDist").innerHTML = d ? `${d.toFixed(2)}<small>m</small>` : `—<small>aim lower</small>`;
+  const ex = d ? Math.min(280, 30 + d/ (S.camH*5) * 250) : 280;
+  $("ray").setAttribute("x2", ex); $("rayEnd").setAttribute("cx", ex);
+  const o = cur(); $("tApply").textContent = o ? `Apply to ${name(o)}` : "Apply to selected"; $("tApply").disabled = !o || !d;
+}
+$("tH").value = S.camH;
+$("tH").addEventListener("input", e => { const v = parseFloat(e.target.value); if (v > 0.1){ S.camH = v; store.set("camH", v); renderTilt(); } });
+$("tMan").addEventListener("input", renderTilt);
+$("tApply").addEventListener("click", () => { const o = cur(), d = tiltDist(); if (!o || !d) return; o.dMode = "tilt"; o.d = +d.toFixed(2); renderAll(true); draw(); });
+setInterval(renderTilt, 300);
+
+// location for local g
+$("lat").value = S.lat; $("alt").value = S.alt;
+$("lat").addEventListener("input", e => { const v = parseFloat(e.target.value); if (v >= -90 && v <= 90){ S.lat = v; store.set("lat", v); renderG(); renderRank(); } });
+$("alt").addEventListener("input", e => { const v = parseFloat(e.target.value); if (isFinite(v)){ S.alt = v; store.set("alt", v); renderG(); renderRank(); } });
+$("geo").addEventListener("click", () => {
+  if (!navigator.geolocation){ $("geoMsg").textContent = "Location isn't available here. Type your latitude."; return; }
+  $("geoMsg").textContent = "Locating…";
+  navigator.geolocation.getCurrentPosition(p => {
+    S.lat = +p.coords.latitude.toFixed(4); $("lat").value = S.lat; store.set("lat", S.lat);
+    if (p.coords.altitude != null){ S.alt = Math.round(p.coords.altitude); $("alt").value = S.alt; store.set("alt", S.alt); }
+    $("geoMsg").textContent = "Updated."; renderG(); renderRank();
+  }, () => { $("geoMsg").textContent = inFrame ? "Blocked in this preview. Type your latitude." : "Location was denied. Type your latitude."; }, { enableHighAccuracy:true, timeout:8000 });
+});
+
+// ---------- boot ----------
+window.addEventListener("resize", () => draw());
+setMode("demo"); renderG(); renderTilt();
+document.fonts?.ready.then(() => draw());
+})();
+</script>
+
+</body>
+</html>
